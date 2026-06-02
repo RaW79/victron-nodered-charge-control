@@ -1,0 +1,610 @@
+[
+    {
+        "id": "0feaaf0c3923705a",
+        "type": "tab",
+        "label": "Volladung mit History",
+        "disabled": false,
+        "info": "# 🔋 Volladungssteuerung (Victron / DVCC)\n\nSteuert die DVCC-Ladespannung eines Victron-Batteriesystems mit JK-BMS.\n\n## Betriebsmodi\n| Modus    | Verhalten                                        |\n|----------|--------------------------------------------------|\n| `auto`   | max. 1 Volladung alle 2 Kalenderwochen           |\n| `manual` | erzwingt sofort Volladung (DVCC = 0 V)           |\n| `bulk`   | dauerhafte Schonladung (Float 53.9 V)            |\n\n## Funktionslogik\n1. CVL vom BMS einlesen (oder Heartbeat 1x/Stunde)\n2. Ready-Guard: warten bis History geladen\n3. Spannungsabfall ≥ `DELTA_V` erkennen → Volladung\n4. History-File aktualisieren\n5. DVCC entsprechend setzen\n\n## Parameter\n- `DELTA_V`        = 0.5 V\n- `FLOAT_VOLTAGE`  = 53.9 V\n- Mindestabstand: 2 Kalenderwochen zwischen Volladungen\n- Fallback bei leerer History: aktueller KW (verhindert Phantom-Volladung)\n\n## Pfade\n- History: `/data/home/nodered/.node-red/history/volladung_history.json`\n- DVCC:    `com.victronenergy.settings → /Settings/SystemSetup/MaxChargeVoltage`\n- CVL:     `com.victronenergy.battery/512 → /Info/MaxChargeVoltage`\n"
+    },
+    {
+        "id": "45517fd7734c615d",
+        "type": "group",
+        "z": "0feaaf0c3923705a",
+        "name": "  INPUTS",
+        "style": {
+            "label": true,
+            "label-position": "nw",
+            "color": "#3a3a3a",
+            "fill": "#f2f2f2",
+            "fill-opacity": "0.45",
+            "stroke": "#a8a8a8"
+        },
+        "nodes": [
+            "ded2a010d528bca9",
+            "e9ef2d7080227ffb",
+            "f1ae8934649297cf",
+            "5b3b1bfdbcf53828",
+            "8043d8f0d32ebefd",
+            "57062d29196d5801",
+            "a1b2c3d4e5f60001",
+            "beec2f55e4921955"
+        ],
+        "x": 9,
+        "y": 99,
+        "w": 292,
+        "h": 562
+    },
+    {
+        "id": "5143a28f03cf2d9c",
+        "type": "group",
+        "z": "0feaaf0c3923705a",
+        "name": "  LOGIK",
+        "style": {
+            "label": true,
+            "label-position": "nw",
+            "color": "#2e2e2e",
+            "fill": "#e6e6e6",
+            "fill-opacity": "0.55",
+            "stroke": "#909090"
+        },
+        "nodes": [
+            "5d05c8d5fd1bf194",
+            "9c8994a71f0429a0",
+            "b8bff44154174240"
+        ],
+        "x": 354,
+        "y": 419,
+        "w": 252,
+        "h": 202
+    },
+    {
+        "id": "c804c0af6c4f296e",
+        "type": "group",
+        "z": "0feaaf0c3923705a",
+        "name": "  FILTER",
+        "style": {
+            "label": true,
+            "label-position": "nw",
+            "color": "#3a3a3a",
+            "fill": "#ededed",
+            "fill-opacity": "0.5",
+            "stroke": "#a0a0a0"
+        },
+        "nodes": [
+            "e714979e071c1f58",
+            "fe1a85b4b2de6dc2"
+        ],
+        "x": 634,
+        "y": 259,
+        "w": 192,
+        "h": 142
+    },
+    {
+        "id": "fe715181731c0d5d",
+        "type": "group",
+        "z": "0feaaf0c3923705a",
+        "name": "  OUTPUT",
+        "style": {
+            "label": true,
+            "label-position": "nw",
+            "color": "#2e2e2e",
+            "fill": "#dedede",
+            "fill-opacity": "0.55",
+            "stroke": "#888888"
+        },
+        "nodes": [
+            "16bf76fe1ae6db8d",
+            "4e03c4118184fcfa",
+            "b831379606120465"
+        ],
+        "x": 894,
+        "y": 259,
+        "w": 532,
+        "h": 142
+    },
+    {
+        "id": "38d2c4b5e9f7aae9",
+        "type": "group",
+        "z": "0feaaf0c3923705a",
+        "name": "  PERSISTENZ (History)",
+        "style": {
+            "label": true,
+            "label-position": "nw",
+            "color": "#3a3a3a",
+            "fill": "#f2f2f2",
+            "fill-opacity": "0.45",
+            "stroke": "#a8a8a8"
+        },
+        "nodes": [
+            "d8d84aef9838f156",
+            "9b2ad5f82dae497e",
+            "dfe01e7e0f345d35",
+            "018a33cafcea1ff7",
+            "62dd50d63f6871e5"
+        ],
+        "x": 14,
+        "y": 719,
+        "w": 1362,
+        "h": 82
+    },
+    {
+        "id": "17b3ed613bc9455a",
+        "type": "comment",
+        "z": "0feaaf0c3923705a",
+        "name": "🔋  Volladungssteuerung  ·  Victron DVCC  ·  JK-BMS",
+        "info": "Volladung Logic Node (Victron / DVCC)\n\nBetriebsmodi:\nauto: max. 1 Volladung alle 2 Kalenderwochen\nmanual: erzwingt sofort Volladung (DVCC=0V)\nbulk: Dauerhafte Schonladung (Float 53.9V)\n\nTrigger:\n- CVL vom JK-BMS (onlyChanges)\n- Heartbeat 1x/Stunde (cron 0 * * * *)\n- Modus-Inject\n\nFunktionslogik:\n- Ready-Guard: warten bis History geladen\n- CVL einlesen / aus Context\n- Spannungsabfall DELTA_V detektieren -> Volladung\n- Mindestabstand 2 Wochen prüfen (inkl. Jahresgrenz-Behandlung)\n- History File aktualisieren\n- DVCC entsprechend setzen\n\nKontext:\n- letzte Volladung (KW + Jahr + Datum)\n- letzter Max-CVL\n- Modus\n- lastCVL (für Heartbeat)\n\nParameter: DELTA_V, FLOAT_VOLTAGE",
+        "x": 200,
+        "y": 40,
+        "wires": []
+    },
+    {
+        "id": "ded2a010d528bca9",
+        "type": "victron-input-battery",
+        "z": "0feaaf0c3923705a",
+        "g": "45517fd7734c615d",
+        "service": "com.victronenergy.battery/512",
+        "path": "/Info/MaxChargeVoltage",
+        "serviceObj": {
+            "service": "com.victronenergy.battery/512",
+            "name": "JK-BMS",
+            "communityTag": "battery"
+        },
+        "pathObj": {
+            "path": "/Info/MaxChargeVoltage",
+            "type": "float",
+            "name": "CVL - Charge Voltage Limit (V)"
+        },
+        "name": "CVL vom JK-BMS",
+        "onlyChanges": true,
+        "roundValues": "3",
+        "outputs": 1,
+        "conditionalMode": false,
+        "outputTrue": "",
+        "outputFalse": "",
+        "debounce": "",
+        "x": 150,
+        "y": 140,
+        "wires": [
+            [
+                "b8bff44154174240"
+            ]
+        ]
+    },
+    {
+        "id": "e9ef2d7080227ffb",
+        "type": "inject",
+        "z": "0feaaf0c3923705a",
+        "g": "45517fd7734c615d",
+        "name": "Simulierter CVL 56V",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "payload": "56",
+        "payloadType": "num",
+        "x": 160,
+        "y": 200,
+        "wires": [
+            [
+                "b8bff44154174240"
+            ]
+        ]
+    },
+    {
+        "id": "f1ae8934649297cf",
+        "type": "inject",
+        "z": "0feaaf0c3923705a",
+        "g": "45517fd7734c615d",
+        "name": "Simulierter CVL 55V",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "payload": "55",
+        "payloadType": "num",
+        "x": 160,
+        "y": 260,
+        "wires": [
+            [
+                "b8bff44154174240"
+            ]
+        ]
+    },
+    {
+        "id": "5b3b1bfdbcf53828",
+        "type": "inject",
+        "z": "0feaaf0c3923705a",
+        "g": "45517fd7734c615d",
+        "name": "Modus: Manuell",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "payload": "manual",
+        "payloadType": "str",
+        "x": 150,
+        "y": 360,
+        "wires": [
+            [
+                "b8bff44154174240"
+            ]
+        ]
+    },
+    {
+        "id": "8043d8f0d32ebefd",
+        "type": "inject",
+        "z": "0feaaf0c3923705a",
+        "g": "45517fd7734c615d",
+        "name": "Modus: Bulk / Schon",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "payload": "bulk",
+        "payloadType": "str",
+        "x": 160,
+        "y": 420,
+        "wires": [
+            [
+                "b8bff44154174240"
+            ]
+        ]
+    },
+    {
+        "id": "57062d29196d5801",
+        "type": "inject",
+        "z": "0feaaf0c3923705a",
+        "g": "45517fd7734c615d",
+        "name": "Modus: Automatik",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "payload": "auto",
+        "payloadType": "str",
+        "x": 155,
+        "y": 480,
+        "wires": [
+            [
+                "b8bff44154174240"
+            ]
+        ]
+    },
+    {
+        "id": "a1b2c3d4e5f60001",
+        "type": "inject",
+        "z": "0feaaf0c3923705a",
+        "g": "45517fd7734c615d",
+        "name": "Heartbeat (KW-Check)",
+        "props": [
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "0 * * * *",
+        "once": true,
+        "onceDelay": "10",
+        "topic": "heartbeat",
+        "payload": "",
+        "payloadType": "str",
+        "x": 165,
+        "y": 540,
+        "wires": [
+            [
+                "b8bff44154174240"
+            ]
+        ]
+    },
+    {
+        "id": "beec2f55e4921955",
+        "type": "status",
+        "z": "0feaaf0c3923705a",
+        "g": "45517fd7734c615d",
+        "name": "CVL-Wert tracken",
+        "scope": [
+            "ded2a010d528bca9"
+        ],
+        "x": 170,
+        "y": 620,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "b8bff44154174240",
+        "type": "function",
+        "z": "0feaaf0c3923705a",
+        "g": "5143a28f03cf2d9c",
+        "name": "Volladung Logic",
+        "func": "// =====================\n// Volladung Logic (Victron)\n// Output 1: DVCC Spannung\n// Output 2: History schreiben (nur bei Volladung)\n// =====================\n\nvar DELTA_V = 0.5;\nvar FLOAT_VOLTAGE = 53.9;\n\nfunction getKW(date) {\n    var d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));\n    var dayNum = d.getUTCDay() || 7;\n    d.setUTCDate(d.getUTCDate() + 4 - dayNum);\n    var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));\n    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);\n}\n\nfunction weeksDiff(kwA, yearA, kwB, yearB) {\n    // Gesamtwochen-Differenz über Jahresgrenzen hinweg\n    if (yearA === yearB) return kwB - kwA;\n    var lastKWofYearA = getKW(new Date(Date.UTC(yearA, 11, 28)));\n    return (lastKWofYearA - kwA) + kwB;\n}\n\nfunction hhmm(d) {\n    var h = ('0'+d.getHours()).slice(-2);\n    var m = ('0'+d.getMinutes()).slice(-2);\n    var s = ('0'+d.getSeconds()).slice(-2);\n    return h+':'+m+':'+s;\n}\n\nvar now = new Date();\nvar currentKW = getKW(now);\nvar currentYear = now.getFullYear();\nvar currentDateStr = now.toISOString().slice(0,10);\nvar nowTimeStr = hhmm(now);\n\n// ----- Guard: History muss geladen sein -----\nif (!flow.get('volladung_history_ready')) {\n    node.status({\n        fill: 'yellow',\n        shape: 'ring',\n        text: '⏳ warte auf History... | ' + nowTimeStr\n    });\n    return null;\n}\n\n// ----- Heartbeat: Re-Evaluation -----\nif (msg.topic === \"heartbeat\") {\n    var lastCVLhb = context.get('lastCVL');\n    if (typeof lastCVLhb === \"number\") {\n        msg.payload = lastCVLhb;\n    } else {\n        var histHB = flow.get('volladung_history') || [];\n        var lastKWHB = histHB.length > 0 ? histHB[histHB.length-1].kw : currentKW;\n        var lastYearHB = histHB.length > 0 ? (histHB[histHB.length-1].year || currentYear) : currentYear;\n        var lastDateHB = histHB.length > 0 ? histHB[histHB.length-1].date : currentDateStr;\n        var modusHB = context.get('modus') || 'auto';\n\n        var dvccHB;\n        if (modusHB === 'manual') dvccHB = 0;\n        else if (modusHB === 'bulk') dvccHB = FLOAT_VOLTAGE;\n        else dvccHB = (weeksDiff(lastKWHB, lastYearHB, currentKW, currentYear) >= 2) ? 0 : FLOAT_VOLTAGE;\n\n        context.set('lastDVCC', dvccHB);\n\n        node.status({\n            fill: 'cyan',\n            shape: 'dot',\n            text: '⏱ HB(KW-only) | DVCC:' + dvccHB + 'V | KW' + currentKW + ' letzte:KW' + lastKWHB + ' (' + lastDateHB + ') | ' + nowTimeStr\n        });\n        return [{payload: dvccHB}, null];\n    }\n}\n\n// ----- History laden -----\nvar history = flow.get('volladung_history');\nif (!history) history = [];\n\nvar lastEntry = history.length > 0 ? history[history.length-1] : null;\nvar lastFullKW = lastEntry ? lastEntry.kw : currentKW;\nvar lastFullYear = lastEntry ? (lastEntry.year || currentYear) : currentYear;\nvar lastFullDate = lastEntry ? lastEntry.date : currentDateStr;\n\nvar lastMaxCVL = context.get('lastMaxCVL');\nvar modus = context.get('modus');\nif (!modus) modus = \"auto\";\n\nvar msgCount = context.get('msgCount') || 0;\nvar fullChargeCount = context.get('fullChargeCount') || 0;\n\n// ----- Modus Inject -----\nif (typeof msg.payload === \"string\") {\n    if ([\"manual\",\"bulk\",\"auto\"].indexOf(msg.payload) !== -1) {\n        modus = msg.payload;\n        context.set(\"modus\", modus);\n        context.set(\"lastModeChange\", nowTimeStr);\n\n        node.status({\n            fill:\"blue\",\n            shape:\"dot\",\n            text: \"⚙ \"+modus.toUpperCase()+\n                  \" | KW\"+currentKW+\n                  \" | letzte: KW\"+lastFullKW+\" (\"+lastFullDate+\")\"+\n                  \" | \"+nowTimeStr\n        });\n    }\n    return null;\n}\n\n// ----- CVL Input -----\nif (typeof msg.payload !== \"number\") return null;\nvar currentCVL = msg.payload;\nmsgCount++;\ncontext.set('msgCount', msgCount);\ncontext.set('lastCVL', currentCVL);\ncontext.set('lastUpdate', nowTimeStr);\n\nif (lastMaxCVL === undefined) lastMaxCVL = currentCVL;\n\nvar dvccVoltage;\nvar fullChargeDetected = false;\nvar deltaVal = lastMaxCVL - currentCVL;\n\n// ----- Wochen-Differenz berechnen -----\nvar kwDiff = weeksDiff(lastFullKW, lastFullYear, currentKW, currentYear);\n\n// ----- Logik -----\nif (modus === \"manual\") {\n    dvccVoltage = 0;\n}\nelse if (modus === \"bulk\") {\n    dvccVoltage = FLOAT_VOLTAGE;\n}\nelse {\n    if (deltaVal >= DELTA_V) {\n        if (kwDiff >= 2) {\n            fullChargeDetected = true;\n            fullChargeCount++;\n            context.set('fullChargeCount', fullChargeCount);\n\n            var entry = { kw: currentKW, year: currentYear, date: currentDateStr };\n            history.push(entry);\n            flow.set(\"volladung_history\", history);\n\n            lastFullKW = currentKW;\n            lastFullYear = currentYear;\n            lastFullDate = currentDateStr;\n            kwDiff = 0;\n        }\n        lastMaxCVL = currentCVL;\n    }\n\n    if (currentCVL > lastMaxCVL) {\n        lastMaxCVL = currentCVL;\n    }\n\n    dvccVoltage = (kwDiff >= 2) ? 0 : FLOAT_VOLTAGE;\n}\n\n// ----- Context speichern -----\ncontext.set(\"lastMaxCVL\", lastMaxCVL);\ncontext.set(\"modus\", modus);\ncontext.set(\"lastDVCC\", dvccVoltage);\n\n// ----- Statusanzeige -----\nvar statusIcon;\nvar statusColor;\n\nif (fullChargeDetected) {\n    statusIcon = \"✓ VOLL\";\n    statusColor = \"green\";\n} else if (modus === \"manual\") {\n    statusIcon = \"⚡ MAN\";\n    statusColor = \"yellow\";\n} else if (modus === \"bulk\") {\n    statusIcon = \"≈ BULK\";\n    statusColor = \"grey\";\n} else if (dvccVoltage === 0) {\n    statusIcon = \"↑ LADE\";\n    statusColor = \"blue\";\n} else {\n    statusIcon = \"● FLOAT\";\n    statusColor = \"blue\";\n}\n\nnode.status({\n    fill: statusColor,\n    shape: \"dot\",\n    text:\n        statusIcon+\n        \" | CVL:\"+currentCVL.toFixed(2)+\"V (max:\"+lastMaxCVL.toFixed(2)+\", Δ:\"+deltaVal.toFixed(2)+\")\"+\n        \" | DVCC:\"+dvccVoltage+\"V\"+\n        \" | KW\"+currentKW+\" letzte:KW\"+lastFullKW+\" (\"+lastFullDate+\")\"+\n        \" | n=\"+msgCount+\" full=\"+fullChargeCount+\n        \" | \"+nowTimeStr\n});\n\n// ----- Output 1: DVCC -----\nvar msgDVCC = { payload: dvccVoltage };\n\n// ----- Output 2: History nur bei echter Volladung -----\nvar msgHistory = null;\nif (fullChargeDetected) {\n    msgHistory = { payload: JSON.stringify(history, null, 2) };\n}\n\nreturn [msgDVCC, msgHistory];\n",
+        "outputs": 2,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 480,
+        "y": 460,
+        "wires": [
+            [
+                "e714979e071c1f58"
+            ],
+            [
+                "018a33cafcea1ff7"
+            ]
+        ],
+        "icon": "font-awesome/fa-bolt"
+    },
+    {
+        "id": "5d05c8d5fd1bf194",
+        "type": "debug",
+        "z": "0feaaf0c3923705a",
+        "g": "5143a28f03cf2d9c",
+        "name": "Debug Logic OUT",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 470,
+        "y": 520,
+        "wires": []
+    },
+    {
+        "id": "9c8994a71f0429a0",
+        "type": "catch",
+        "z": "0feaaf0c3923705a",
+        "g": "5143a28f03cf2d9c",
+        "name": "Catch Logic-Fehler",
+        "scope": [
+            "b8bff44154174240"
+        ],
+        "uncaught": false,
+        "x": 470,
+        "y": 580,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "e714979e071c1f58",
+        "type": "rbe",
+        "z": "0feaaf0c3923705a",
+        "g": "c804c0af6c4f296e",
+        "name": "RBE Filter",
+        "func": "rbe",
+        "gap": "",
+        "start": "",
+        "inout": "out",
+        "property": "payload",
+        "x": 730,
+        "y": 300,
+        "wires": [
+            [
+                "16bf76fe1ae6db8d",
+                "4e03c4118184fcfa"
+            ]
+        ]
+    },
+    {
+        "id": "fe1a85b4b2de6dc2",
+        "type": "status",
+        "z": "0feaaf0c3923705a",
+        "g": "c804c0af6c4f296e",
+        "name": "RBE-Status",
+        "scope": [
+            "e714979e071c1f58"
+        ],
+        "x": 730,
+        "y": 360,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "16bf76fe1ae6db8d",
+        "type": "victron-output-custom",
+        "z": "0feaaf0c3923705a",
+        "g": "fe715181731c0d5d",
+        "service": "com.victronenergy.settings",
+        "path": "/Settings/SystemSetup/MaxChargeVoltage",
+        "serviceObj": {
+            "service": "com.victronenergy.settings",
+            "name": "com.victronenergy.settings"
+        },
+        "pathObj": {
+            "path": "/Settings/SystemSetup/MaxChargeVoltage",
+            "name": "/Settings/SystemSetup/MaxChargeVoltage",
+            "type": "number",
+            "value": 0
+        },
+        "name": "DVCC MaxChargeVoltage",
+        "onlyChanges": false,
+        "outputs": 0,
+        "x": 1030,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "4e03c4118184fcfa",
+        "type": "function",
+        "z": "0feaaf0c3923705a",
+        "g": "fe715181731c0d5d",
+        "name": "DVCC Tracker",
+        "func": "var d = new Date();\nvar t = ('0'+d.getHours()).slice(-2)+':'+\n        ('0'+d.getMinutes()).slice(-2)+':'+\n        ('0'+d.getSeconds()).slice(-2);\n\nvar count = context.get('writeCount') || 0;\ncount++;\ncontext.set('writeCount', count);\n\nvar v = msg.payload;\nvar label;\nif (v === 0) label = \"DVCC=0 (BMS frei)\";\nelse label = \"DVCC=\"+v+\"V (Float)\";\n\nnode.status({\n    fill: v === 0 ? \"blue\" : \"green\",\n    shape: \"dot\",\n    text: label+\" | writes:\"+count+\" | \"+t\n});\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1010,
+        "y": 360,
+        "wires": [
+            [
+                "b831379606120465"
+            ]
+        ],
+        "icon": "font-awesome/fa-tachometer"
+    },
+    {
+        "id": "b831379606120465",
+        "type": "debug",
+        "z": "0feaaf0c3923705a",
+        "g": "fe715181731c0d5d",
+        "name": "Debug DVCC",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1300,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "d8d84aef9838f156",
+        "type": "inject",
+        "z": "0feaaf0c3923705a",
+        "g": "38d2c4b5e9f7aae9",
+        "name": "Load History Start",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": "3",
+        "topic": "",
+        "payload": "",
+        "payloadType": "str",
+        "x": 150,
+        "y": 760,
+        "wires": [
+            [
+                "9b2ad5f82dae497e"
+            ]
+        ]
+    },
+    {
+        "id": "9b2ad5f82dae497e",
+        "type": "file in",
+        "z": "0feaaf0c3923705a",
+        "g": "38d2c4b5e9f7aae9",
+        "name": "Read Volladung History",
+        "filename": "/data/home/nodered/.node-red/history/volladung_history.json",
+        "format": "utf8",
+        "chunk": false,
+        "sendError": true,
+        "encoding": "none",
+        "x": 400,
+        "y": 760,
+        "wires": [
+            [
+                "dfe01e7e0f345d35"
+            ]
+        ]
+    },
+    {
+        "id": "dfe01e7e0f345d35",
+        "type": "function",
+        "z": "0feaaf0c3923705a",
+        "g": "38d2c4b5e9f7aae9",
+        "name": "Load History into Context",
+        "func": "var d = new Date();\nvar t = ('0'+d.getHours()).slice(-2)+':'+\n        ('0'+d.getMinutes()).slice(-2);\n\ntry {\n    var history = JSON.parse(msg.payload);\n    flow.set('volladung_history', history);\n    flow.set('volladung_history_ready', true);\n\n    var last = history.length > 0 ? history[history.length-1] : null;\n    var lastText = last ? (\"letzte: KW\"+last.kw+\" (\"+last.date+\")\") : \"keine Einträge\";\n\n    node.status({\n        fill:'green',\n        shape:'dot',\n        text: '✓ '+history.length+' Einträge | '+lastText+' | geladen '+t\n    });\n} catch (e) {\n    flow.set('volladung_history', []);\n    flow.set('volladung_history_ready', true);\n    node.status({\n        fill:'red',\n        shape:'ring',\n        text:'✗ History leer/ungültig | '+t\n    });\n}\nreturn null;\n",
+        "outputs": 0,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 670,
+        "y": 760,
+        "wires": [],
+        "icon": "font-awesome/fa-database"
+    },
+    {
+        "id": "018a33cafcea1ff7",
+        "type": "file",
+        "z": "0feaaf0c3923705a",
+        "g": "38d2c4b5e9f7aae9",
+        "name": "Write Volladung History",
+        "filename": "/data/home/nodered/.node-red/history/volladung_history.json",
+        "filenameType": "str",
+        "appendNewline": false,
+        "createDir": true,
+        "overwriteFile": true,
+        "encoding": "utf8",
+        "x": 1000,
+        "y": 760,
+        "wires": [
+            [
+                "62dd50d63f6871e5"
+            ]
+        ]
+    },
+    {
+        "id": "62dd50d63f6871e5",
+        "type": "function",
+        "z": "0feaaf0c3923705a",
+        "g": "38d2c4b5e9f7aae9",
+        "name": "Write Tracker",
+        "func": "var d = new Date();\nvar t = ('0'+d.getHours()).slice(-2)+':'+\n        ('0'+d.getMinutes()).slice(-2)+':'+\n        ('0'+d.getSeconds()).slice(-2);\nvar dt = d.toISOString().slice(0,10);\n\nvar count = context.get('writes') || 0;\ncount++;\ncontext.set('writes', count);\n\nnode.status({\n    fill:'green',\n    shape:'dot',\n    text: '✓ geschrieben '+dt+' '+t+' | total:'+count\n});\nreturn null;\n",
+        "outputs": 0,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1280,
+        "y": 760,
+        "wires": [],
+        "icon": "font-awesome/fa-floppy-o"
+    },
+    {
+        "id": "a566b6c7948d2ac4",
+        "type": "global-config",
+        "env": [],
+        "modules": {
+            "@victronenergy/node-red-contrib-victron": "1.6.64"
+        }
+    }
+]
