@@ -4,7 +4,7 @@
         "type": "tab",
         "label": "Volladung mit History",
         "disabled": false,
-        "info": "# 🔋 Volladungssteuerung (Victron / DVCC)\n\nSteuert die DVCC-Ladespannung eines Victron-Batteriesystems mit JK-BMS.\n\n## Betriebsmodi\n| Modus    | Verhalten                                        |\n|----------|--------------------------------------------------|\n| `auto`   | max. 1 Volladung alle 2 Kalenderwochen           |\n| `manual` | erzwingt sofort Volladung (DVCC = 0 V)           |\n| `bulk`   | dauerhafte Schonladung (Float 53.9 V)            |\n\n## Funktionslogik\n1. CVL vom BMS einlesen (oder Heartbeat 1x/Stunde)\n2. Ready-Guard: warten bis History geladen\n3. Spannungsabfall ≥ `DELTA_V` erkennen → Volladung\n4. History-File aktualisieren\n5. DVCC entsprechend setzen\n\n## Parameter\n- `DELTA_V`        = 0.5 V\n- `FLOAT_VOLTAGE`  = 53.9 V\n- Mindestabstand: 2 Kalenderwochen zwischen Volladungen\n- Fallback bei leerer History: aktueller KW (verhindert Phantom-Volladung)\n\n## Pfade\n- History: `/data/home/nodered/.node-red/history/volladung_history.json`\n- DVCC:    `com.victronenergy.settings → /Settings/SystemSetup/MaxChargeVoltage`\n- CVL:     `com.victronenergy.battery/512 → /Info/MaxChargeVoltage`\n"
+        "info": "# 🔋 Volladungssteuerung (Victron / DVCC)\n\nSteuert die DVCC-Ladespannung eines Victron-Batteriesystems mit JK-BMS.\n\n## Betriebsmodi\n| Modus    | Verhalten                                                  |\n|----------|------------------------------------------------------------|\n| `auto`   | Volladung alle N Kalenderwochen (→ FULL_CHARGE_INTERVAL)   |\n| `manual` | erzwingt sofort Volladung (DVCC = 0 V / RCV)              |\n| `bulk`   | dauerhafte Schonladung (Float = FLOAT_VOLTAGE)             |\n\n## Lademodi\n| Modus       | Beschreibung                                                                           |\n|-------------|----------------------------------------------------------------------------------------|\n| CVL-Modus   | Volladungs-Erkennung über JK-BMS CVL-Abfall (DELTA_V)                                  |\n| Autarkmodus | DVCC setzt RCV_VOLTAGE; Spannung erreicht → Hold-Timer; nach RCV_TIME_MIN min → Float  |\n\n## Parameter im Logik Node\n- `DELTA_V`              = 0.5 V    — CVL-Abfallerkennung (nur CVL-Modus)\n- `FLOAT_VOLTAGE`        = 53.9 V   — Schonladespannung\n- `FULL_CHARGE_INTERVAL` = 2        — Volladung alle N Kalenderwochen\n- `AUTONOMOUS_MODE`      = false    — false: CVL-Modus | true: Autarkmodus\n- `RCV_VOLTAGE`          = 55.2 V   — Volladespannung (Autarkmodus)\n- `RCV_DETECT_DELTA`     = 0.2 V    — Toleranz für RCV-Spannungserkennung (Autarkmodus)\n- `RCV_TIME_MIN`         = 120 min  — Haltezeit bei RCV-Spannung (Autarkmodus)\n\n## Pfade\n- History: `/data/home/nodered/.node-red/history/volladung_history.json`\n- DVCC:    `com.victronenergy.settings → /Settings/SystemSetup/MaxChargeVoltage`\n- CVL:     `com.victronenergy.battery/512 → /Info/MaxChargeVoltage`\n- Spannung:`com.victronenergy.battery/512 → /Dc/0/Voltage` (Autarkmodus)\n"
     },
     {
         "id": "45517fd7734c615d",
@@ -27,12 +27,14 @@
             "8043d8f0d32ebefd",
             "57062d29196d5801",
             "a1b2c3d4e5f60001",
-            "beec2f55e4921955"
+            "beec2f55e4921955",
+            "c1d2e3f4a5b60001",
+            "c1d2e3f4a5b60002"
         ],
         "x": 9,
         "y": 99,
         "w": 292,
-        "h": 562
+        "h": 702
     },
     {
         "id": "5143a28f03cf2d9c",
@@ -123,7 +125,7 @@
             "62dd50d63f6871e5"
         ],
         "x": 14,
-        "y": 719,
+        "y": 879,
         "w": 1362,
         "h": 82
     },
@@ -132,7 +134,7 @@
         "type": "comment",
         "z": "0feaaf0c3923705a",
         "name": "🔋  Volladungssteuerung  ·  Victron DVCC  ·  JK-BMS",
-        "info": "Volladung Logic Node (Victron / DVCC)\n\nBetriebsmodi:\nauto: max. 1 Volladung alle 2 Kalenderwochen\nmanual: erzwingt sofort Volladung (DVCC=0V)\nbulk: Dauerhafte Schonladung (Float 53.9V)\n\nTrigger:\n- CVL vom JK-BMS (onlyChanges)\n- Heartbeat 1x/Stunde (cron 0 * * * *)\n- Modus-Inject\n\nFunktionslogik:\n- Ready-Guard: warten bis History geladen\n- CVL einlesen / aus Context\n- Spannungsabfall DELTA_V detektieren -> Volladung\n- Mindestabstand 2 Wochen prüfen (inkl. Jahresgrenz-Behandlung)\n- History File aktualisieren\n- DVCC entsprechend setzen\n\nKontext:\n- letzte Volladung (KW + Jahr + Datum)\n- letzter Max-CVL\n- Modus\n- lastCVL (für Heartbeat)\n\nParameter: DELTA_V, FLOAT_VOLTAGE",
+        "info": "Volladung Logic Node (Victron / DVCC)\n\nBetriebsmodi:\nauto: Volladung alle N Kalenderwochen (FULL_CHARGE_INTERVAL)\nmanual: erzwingt sofort Volladung (DVCC=0V / RCV)\nbulk: Dauerhafte Schonladung (Float FLOAT_VOLTAGE)\n\nLademodi:\nCVL-Modus (AUTONOMOUS_MODE=false):\n  Volladungs-Erkennung über JK-BMS CVL-Abfall (DELTA_V)\nAutarkmodus (AUTONOMOUS_MODE=true):\n  DVCC → RCV_VOLTAGE wenn Volladung fällig\n  Sobald v_bat >= RCV_VOLTAGE - RCV_DETECT_DELTA: Hold-Timer\n  Nach RCV_TIME_MIN Minuten → Float + History\n\nTrigger:\n- CVL vom JK-BMS (onlyChanges) — nur CVL-Modus\n- Batteriespannung JK-BMS — nur Autarkmodus\n- Heartbeat 1x/Stunde (cron 0 * * * *)\n- Modus-Inject\n\nKontext:\n- letzte Volladung (KW + Jahr + Datum)\n- letzter Max-CVL (CVL-Modus)\n- rcvActive / rcvHoldStart (Autarkmodus)\n- Modus\n\nParameter:\nDELTA_V, FLOAT_VOLTAGE, FULL_CHARGE_INTERVAL,\nAUTONOMOUS_MODE, RCV_VOLTAGE, RCV_DETECT_DELTA, RCV_TIME_MIN",
         "x": 200,
         "y": 40,
         "wires": []
@@ -341,12 +343,73 @@
         ]
     },
     {
+        "id": "c1d2e3f4a5b60001",
+        "type": "victron-input-battery",
+        "z": "0feaaf0c3923705a",
+        "g": "45517fd7734c615d",
+        "service": "com.victronenergy.battery/512",
+        "path": "/Dc/0/Voltage",
+        "serviceObj": {
+            "service": "com.victronenergy.battery/512",
+            "name": "JK-BMS",
+            "communityTag": "battery"
+        },
+        "pathObj": {
+                "path": "/Dc/0/Voltage",
+                "type": "float",
+                "name": "Battery Voltage (V)"
+        },
+        "name": "Batteriespannung JK-BMS",
+        "onlyChanges": false,
+        "roundValues": "3",
+        "outputs": 1,
+        "conditionalMode": false,
+        "outputTrue": "",
+        "outputFalse": "",
+        "debounce": "",
+        "x": 160,
+        "y": 680,
+        "wires": [
+            [
+                "c1d2e3f4a5b60002"
+            ]
+        ]
+    },
+    {
+        "id": "c1d2e3f4a5b60002",
+        "type": "change",
+        "z": "0feaaf0c3923705a",
+        "g": "45517fd7734c615d",
+        "name": "Topic: bat_voltage",
+        "rules": [
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "bat_voltage",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 160,
+        "y": 740,
+        "wires": [
+            [
+                "b8bff44154174240"
+            ]
+        ]
+    },
+    {
         "id": "b8bff44154174240",
         "type": "function",
         "z": "0feaaf0c3923705a",
         "g": "5143a28f03cf2d9c",
         "name": "Volladung Logic",
-        "func": "// =====================\n// Volladung Logic (Victron)\n// Output 1: DVCC Spannung\n// Output 2: History schreiben (nur bei Volladung)\n// =====================\n\nvar DELTA_V = 0.5;\nvar FLOAT_VOLTAGE = 53.9;\n\nfunction getKW(date) {\n    var d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));\n    var dayNum = d.getUTCDay() || 7;\n    d.setUTCDate(d.getUTCDate() + 4 - dayNum);\n    var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));\n    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);\n}\n\nfunction weeksDiff(kwA, yearA, kwB, yearB) {\n    // Gesamtwochen-Differenz über Jahresgrenzen hinweg\n    if (yearA === yearB) return kwB - kwA;\n    var lastKWofYearA = getKW(new Date(Date.UTC(yearA, 11, 28)));\n    return (lastKWofYearA - kwA) + kwB;\n}\n\nfunction hhmm(d) {\n    var h = ('0'+d.getHours()).slice(-2);\n    var m = ('0'+d.getMinutes()).slice(-2);\n    var s = ('0'+d.getSeconds()).slice(-2);\n    return h+':'+m+':'+s;\n}\n\nvar now = new Date();\nvar currentKW = getKW(now);\nvar currentYear = now.getFullYear();\nvar currentDateStr = now.toISOString().slice(0,10);\nvar nowTimeStr = hhmm(now);\n\n// ----- Guard: History muss geladen sein -----\nif (!flow.get('volladung_history_ready')) {\n    node.status({\n        fill: 'yellow',\n        shape: 'ring',\n        text: '⏳ warte auf History... | ' + nowTimeStr\n    });\n    return null;\n}\n\n// ----- Heartbeat: Re-Evaluation -----\nif (msg.topic === \"heartbeat\") {\n    var lastCVLhb = context.get('lastCVL');\n    if (typeof lastCVLhb === \"number\") {\n        msg.payload = lastCVLhb;\n    } else {\n        var histHB = flow.get('volladung_history') || [];\n        var lastKWHB = histHB.length > 0 ? histHB[histHB.length-1].kw : currentKW;\n        var lastYearHB = histHB.length > 0 ? (histHB[histHB.length-1].year || currentYear) : currentYear;\n        var lastDateHB = histHB.length > 0 ? histHB[histHB.length-1].date : currentDateStr;\n        var modusHB = context.get('modus') || 'auto';\n\n        var dvccHB;\n        if (modusHB === 'manual') dvccHB = 0;\n        else if (modusHB === 'bulk') dvccHB = FLOAT_VOLTAGE;\n        else dvccHB = (weeksDiff(lastKWHB, lastYearHB, currentKW, currentYear) >= 2) ? 0 : FLOAT_VOLTAGE;\n\n        context.set('lastDVCC', dvccHB);\n\n        node.status({\n            fill: 'cyan',\n            shape: 'dot',\n            text: '⏱ HB(KW-only) | DVCC:' + dvccHB + 'V | KW' + currentKW + ' letzte:KW' + lastKWHB + ' (' + lastDateHB + ') | ' + nowTimeStr\n        });\n        return [{payload: dvccHB}, null];\n    }\n}\n\n// ----- History laden -----\nvar history = flow.get('volladung_history');\nif (!history) history = [];\n\nvar lastEntry = history.length > 0 ? history[history.length-1] : null;\nvar lastFullKW = lastEntry ? lastEntry.kw : currentKW;\nvar lastFullYear = lastEntry ? (lastEntry.year || currentYear) : currentYear;\nvar lastFullDate = lastEntry ? lastEntry.date : currentDateStr;\n\nvar lastMaxCVL = context.get('lastMaxCVL');\nvar modus = context.get('modus');\nif (!modus) modus = \"auto\";\n\nvar msgCount = context.get('msgCount') || 0;\nvar fullChargeCount = context.get('fullChargeCount') || 0;\n\n// ----- Modus Inject -----\nif (typeof msg.payload === \"string\") {\n    if ([\"manual\",\"bulk\",\"auto\"].indexOf(msg.payload) !== -1) {\n        modus = msg.payload;\n        context.set(\"modus\", modus);\n        context.set(\"lastModeChange\", nowTimeStr);\n\n        node.status({\n            fill:\"blue\",\n            shape:\"dot\",\n            text: \"⚙ \"+modus.toUpperCase()+\n                  \" | KW\"+currentKW+\n                  \" | letzte: KW\"+lastFullKW+\" (\"+lastFullDate+\")\"+\n                  \" | \"+nowTimeStr\n        });\n    }\n    return null;\n}\n\n// ----- CVL Input -----\nif (typeof msg.payload !== \"number\") return null;\nvar currentCVL = msg.payload;\nmsgCount++;\ncontext.set('msgCount', msgCount);\ncontext.set('lastCVL', currentCVL);\ncontext.set('lastUpdate', nowTimeStr);\n\nif (lastMaxCVL === undefined) lastMaxCVL = currentCVL;\n\nvar dvccVoltage;\nvar fullChargeDetected = false;\nvar deltaVal = lastMaxCVL - currentCVL;\n\n// ----- Wochen-Differenz berechnen -----\nvar kwDiff = weeksDiff(lastFullKW, lastFullYear, currentKW, currentYear);\n\n// ----- Logik -----\nif (modus === \"manual\") {\n    dvccVoltage = 0;\n}\nelse if (modus === \"bulk\") {\n    dvccVoltage = FLOAT_VOLTAGE;\n}\nelse {\n    if (deltaVal >= DELTA_V) {\n        if (kwDiff >= 2) {\n            fullChargeDetected = true;\n            fullChargeCount++;\n            context.set('fullChargeCount', fullChargeCount);\n\n            var entry = { kw: currentKW, year: currentYear, date: currentDateStr };\n            history.push(entry);\n            flow.set(\"volladung_history\", history);\n\n            lastFullKW = currentKW;\n            lastFullYear = currentYear;\n            lastFullDate = currentDateStr;\n            kwDiff = 0;\n        }\n        lastMaxCVL = currentCVL;\n    }\n\n    if (currentCVL > lastMaxCVL) {\n        lastMaxCVL = currentCVL;\n    }\n\n    dvccVoltage = (kwDiff >= 2) ? 0 : FLOAT_VOLTAGE;\n}\n\n// ----- Context speichern -----\ncontext.set(\"lastMaxCVL\", lastMaxCVL);\ncontext.set(\"modus\", modus);\ncontext.set(\"lastDVCC\", dvccVoltage);\n\n// ----- Statusanzeige -----\nvar statusIcon;\nvar statusColor;\n\nif (fullChargeDetected) {\n    statusIcon = \"✓ VOLL\";\n    statusColor = \"green\";\n} else if (modus === \"manual\") {\n    statusIcon = \"⚡ MAN\";\n    statusColor = \"yellow\";\n} else if (modus === \"bulk\") {\n    statusIcon = \"≈ BULK\";\n    statusColor = \"grey\";\n} else if (dvccVoltage === 0) {\n    statusIcon = \"↑ LADE\";\n    statusColor = \"blue\";\n} else {\n    statusIcon = \"● FLOAT\";\n    statusColor = \"blue\";\n}\n\nnode.status({\n    fill: statusColor,\n    shape: \"dot\",\n    text:\n        statusIcon+\n        \" | CVL:\"+currentCVL.toFixed(2)+\"V (max:\"+lastMaxCVL.toFixed(2)+\", Δ:\"+deltaVal.toFixed(2)+\")\"+\n        \" | DVCC:\"+dvccVoltage+\"V\"+\n        \" | KW\"+currentKW+\" letzte:KW\"+lastFullKW+\" (\"+lastFullDate+\")\"+\n        \" | n=\"+msgCount+\" full=\"+fullChargeCount+\n        \" | \"+nowTimeStr\n});\n\n// ----- Output 1: DVCC -----\nvar msgDVCC = { payload: dvccVoltage };\n\n// ----- Output 2: History nur bei echter Volladung -----\nvar msgHistory = null;\nif (fullChargeDetected) {\n    msgHistory = { payload: JSON.stringify(history, null, 2) };\n}\n\nreturn [msgDVCC, msgHistory];\n",
+        "func": "// =====================\n// Volladung Logic (Victron)\n// Output 1: DVCC Spannung\n// Output 2: History schreiben (nur bei Volladung)\n// =====================\n\n// ===== PARAMETER =====\nvar DELTA_V              = 0.5;    // CVL-Abfall für Volladungs-Erkennung (CVL-Modus)\nvar FLOAT_VOLTAGE        = 53.9;   // Schonlade-Spannung (V)\nvar FULL_CHARGE_INTERVAL = 2;      // Mindestabstand: alle N Kalenderwochen (1, 2, ...)\nvar AUTONOMOUS_MODE      = false;  // false = CVL-Detektion | true = Autarkmodus\nvar RCV_VOLTAGE          = 55.2;   // Volladespannung im Autarkmodus (V)\nvar RCV_DETECT_DELTA     = 0.2;    // Toleranz RCV-Spannungserkennung (V) — Autarkmodus\nvar RCV_TIME_MIN         = 120;    // Haltezeit bei RCV-Spannung (Minuten) — Autarkmodus\n// =====================\n\nfunction getKW(date) {\n    var d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));\n    var dayNum = d.getUTCDay() || 7;\n    d.setUTCDate(d.getUTCDate() + 4 - dayNum);\n    var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));\n    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);\n}\n\nfunction weeksDiff(kwA, yearA, kwB, yearB) {\n    // Gesamtwochen-Differenz über Jahresgrenzen hinweg\n    if (yearA === yearB) return kwB - kwA;\n    var lastKWofYearA = getKW(new Date(Date.UTC(yearA, 11, 28)));\n    return (lastKWofYearA - kwA) + kwB;\n}\n\nfunction hhmm(d) {\n    var h = ('0'+d.getHours()).slice(-2);\n    var m = ('0'+d.getMinutes()).slice(-2);\n    var s = ('0'+d.getSeconds()).slice(-2);\n    return h+':'+m+':'+s;\n}\n\nvar now = new Date();\nvar currentKW = getKW(now);\nvar currentYear = now.getFullYear();\nvar currentDateStr = now.toISOString().slice(0,10);\nvar nowTimeStr = hhmm(now);\n\n// ----- Guard: History muss geladen sein -----\nif (!flow.get('volladung_history_ready')) {\n    node.status({ fill:'yellow', shape:'ring', text:'⏳ warte auf History... | '+nowTimeStr });\n    return null;\n}\n\n// ----- History laden -----\nvar history = flow.get('volladung_history') || [];\nvar lastEntry    = history.length > 0 ? history[history.length-1] : null;\nvar lastFullKW   = lastEntry ? lastEntry.kw                    : currentKW;\nvar lastFullYear = lastEntry ? (lastEntry.year || currentYear) : currentYear;\nvar lastFullDate = lastEntry ? lastEntry.date                  : currentDateStr;\n\nvar modus = context.get('modus') || 'auto';\nvar fullChargeCount = context.get('fullChargeCount') || 0;\n\n// ----- Modus Inject -----\nif (typeof msg.payload === 'string') {\n    if (['manual','bulk','auto'].indexOf(msg.payload) !== -1) {\n        modus = msg.payload;\n        context.set('modus', modus);\n        context.set('lastModeChange', nowTimeStr);\n        if (modus !== 'auto') {\n            context.set('rcvActive', false);\n            context.set('rcvHoldStart', null);\n        }\n        node.status({ fill:'blue', shape:'dot',\n            text:'⚙ '+modus.toUpperCase()+' | KW'+currentKW+' | letzte: KW'+lastFullKW+' ('+lastFullDate+') | '+nowTimeStr });\n    }\n    return null;\n}\n\n// ----- Wochen-Differenz -----\nvar kwDiff = weeksDiff(lastFullKW, lastFullYear, currentKW, currentYear);\n\n// =====================================================================\n// AUTARKMODUS\n// =====================================================================\nif (AUTONOMOUS_MODE) {\n\n    // ----- Batteriespannung: Hold-Timer-Logik -----\n    if (msg.topic === 'bat_voltage') {\n        var batV = msg.payload;\n        if (typeof batV !== 'number') return null;\n\n        var rcvActiveV = context.get('rcvActive') || false;\n        if (!rcvActiveV || modus !== 'auto') return null;\n\n        var rcvHoldStart = context.get('rcvHoldStart') || null;\n        var threshold    = RCV_VOLTAGE - RCV_DETECT_DELTA;\n\n        if (batV >= threshold) {\n            if (!rcvHoldStart) {\n                // Spannung erstmals erreicht → Hold-Timer starten\n                context.set('rcvHoldStart', now.getTime());\n                node.status({ fill:'blue', shape:'dot',\n                    text:'↑ RCV ERREICHT | '+batV.toFixed(2)+'V ≥ '+threshold.toFixed(2)+'V | Hold 0/'+RCV_TIME_MIN+'min | '+nowTimeStr });\n            } else {\n                var elapsedMin = (now.getTime() - rcvHoldStart) / 60000;\n                if (elapsedMin >= RCV_TIME_MIN) {\n                    // Volladung abgeschlossen → Float\n                    context.set('rcvActive', false);\n                    context.set('rcvHoldStart', null);\n                    fullChargeCount++;\n                    context.set('fullChargeCount', fullChargeCount);\n                    var entryA = { kw: currentKW, year: currentYear, date: currentDateStr };\n                    history.push(entryA);\n                    flow.set('volladung_history', history);\n                    context.set('lastDVCC', FLOAT_VOLTAGE);\n                    node.status({ fill:'green', shape:'dot',\n                        text:'✓ VOLL | DVCC='+FLOAT_VOLTAGE+'V | '+batV.toFixed(2)+'V | '+Math.round(elapsedMin)+'min | full='+fullChargeCount+' | '+nowTimeStr });\n                    return [{payload: FLOAT_VOLTAGE}, {payload: JSON.stringify(history, null, 2)}];\n                } else {\n                    node.status({ fill:'blue', shape:'dot',\n                        text:'↑ RCV HOLD | '+batV.toFixed(2)+'V | '+Math.round(elapsedMin)+'/'+RCV_TIME_MIN+'min | '+nowTimeStr });\n                }\n            }\n        } else {\n            if (rcvHoldStart) context.set('rcvHoldStart', null);\n            node.status({ fill:'blue', shape:'dot',\n                text:'↑ RCV LADEN | '+batV.toFixed(2)+'V / '+RCV_VOLTAGE+'V | '+nowTimeStr });\n        }\n        return null;\n    }\n\n    // CVL-Nachrichten ignorieren (kein BMS-Trigger nötig)\n    if (typeof msg.payload === 'number') return null;\n\n    // ----- Heartbeat / Restart: DVCC-Ausgabe -----\n    var rcvActive = context.get('rcvActive') || false;\n    var dvccA;\n\n    if (modus === 'manual') {\n        dvccA = 0;\n        context.set('rcvActive', false); context.set('rcvHoldStart', null);\n        context.set('lastDVCC', dvccA);\n        node.status({ fill:'yellow', shape:'dot', text:'⚡ MAN | DVCC=0 | '+nowTimeStr });\n        return [{payload: dvccA}, null];\n    }\n    if (modus === 'bulk') {\n        dvccA = FLOAT_VOLTAGE;\n        context.set('rcvActive', false); context.set('rcvHoldStart', null);\n        context.set('lastDVCC', dvccA);\n        node.status({ fill:'grey', shape:'dot', text:'≈ BULK | DVCC='+dvccA+'V | '+nowTimeStr });\n        return [{payload: dvccA}, null];\n    }\n\n    // AUTO\n    if (rcvActive) {\n        dvccA = RCV_VOLTAGE;\n        context.set('lastDVCC', dvccA);\n        var rcvHoldStartHB = context.get('rcvHoldStart') || null;\n        var holdInfo = rcvHoldStartHB\n            ? (Math.round((now.getTime()-rcvHoldStartHB)/60000)+'/'+RCV_TIME_MIN+'min Hold')\n            : 'warte auf Spannung';\n        node.status({ fill:'blue', shape:'dot',\n            text:'↑ RCV | DVCC='+dvccA+'V | '+holdInfo+' | KW'+currentKW+' | '+nowTimeStr });\n        return [{payload: dvccA}, null];\n    } else {\n        if (kwDiff >= FULL_CHARGE_INTERVAL) {\n            context.set('rcvActive', true);\n            context.set('rcvHoldStart', null);\n            dvccA = RCV_VOLTAGE;\n            context.set('lastDVCC', dvccA);\n            node.status({ fill:'blue', shape:'dot',\n                text:'↑ RCV START | DVCC='+dvccA+'V | KW'+currentKW+' letzte:KW'+lastFullKW+' | '+nowTimeStr });\n            return [{payload: dvccA}, null];\n        } else {\n            dvccA = FLOAT_VOLTAGE;\n            context.set('lastDVCC', dvccA);\n            node.status({ fill:'blue', shape:'dot',\n                text:'● FLOAT | DVCC='+dvccA+'V | KW'+currentKW+' letzte:KW'+lastFullKW+' ('+lastFullDate+') | '+nowTimeStr });\n            return [{payload: dvccA}, null];\n        }\n    }\n}\n\n// =====================================================================\n// CVL-MODUS (Standard)\n// =====================================================================\n\n// ----- Heartbeat: Re-Evaluation -----\nif (msg.topic === 'heartbeat') {\n    var lastCVLhb = context.get('lastCVL');\n    if (typeof lastCVLhb === 'number') {\n        msg.payload = lastCVLhb;\n    } else {\n        var dvccHB;\n        if (modus === 'manual') dvccHB = 0;\n        else if (modus === 'bulk') dvccHB = FLOAT_VOLTAGE;\n        else dvccHB = (kwDiff >= FULL_CHARGE_INTERVAL) ? 0 : FLOAT_VOLTAGE;\n        context.set('lastDVCC', dvccHB);\n        node.status({ fill:'cyan', shape:'dot',\n            text:'⏱ HB(KW-only) | DVCC:'+dvccHB+'V | KW'+currentKW+' letzte:KW'+lastFullKW+' ('+lastFullDate+') | '+nowTimeStr });\n        return [{payload: dvccHB}, null];\n    }\n}\n\n// ----- CVL Input -----\nif (typeof msg.payload !== 'number') return null;\nvar currentCVL = msg.payload;\nvar msgCount = (context.get('msgCount') || 0) + 1;\ncontext.set('msgCount', msgCount);\ncontext.set('lastCVL', currentCVL);\ncontext.set('lastUpdate', nowTimeStr);\n\nvar lastMaxCVL = context.get('lastMaxCVL');\nif (lastMaxCVL === undefined) lastMaxCVL = currentCVL;\n\nvar dvccVoltage;\nvar fullChargeDetected = false;\nvar deltaVal = lastMaxCVL - currentCVL;\n\n// ----- Logik -----\nif (modus === 'manual') {\n    dvccVoltage = 0;\n} else if (modus === 'bulk') {\n    dvccVoltage = FLOAT_VOLTAGE;\n} else {\n    if (deltaVal >= DELTA_V) {\n        if (kwDiff >= FULL_CHARGE_INTERVAL) {\n            fullChargeDetected = true;\n            fullChargeCount++;\n            context.set('fullChargeCount', fullChargeCount);\n            var entry = { kw: currentKW, year: currentYear, date: currentDateStr };\n            history.push(entry);\n            flow.set('volladung_history', history);\n            lastFullKW   = currentKW;\n            lastFullYear = currentYear;\n            lastFullDate = currentDateStr;\n            kwDiff = 0;\n        }\n        lastMaxCVL = currentCVL;\n    }\n    if (currentCVL > lastMaxCVL) lastMaxCVL = currentCVL;\n    dvccVoltage = (kwDiff >= FULL_CHARGE_INTERVAL) ? 0 : FLOAT_VOLTAGE;\n}\n\n// ----- Context speichern -----\ncontext.set('lastMaxCVL', lastMaxCVL);\ncontext.set('modus', modus);\ncontext.set('lastDVCC', dvccVoltage);\n\n// ----- Statusanzeige -----\nvar statusIcon, statusColor;\nif (fullChargeDetected)      { statusIcon = '✓ VOLL';  statusColor = 'green';  }\nelse if (modus === 'manual') { statusIcon = '⚡ MAN';   statusColor = 'yellow'; }\nelse if (modus === 'bulk')   { statusIcon = '≈ BULK';  statusColor = 'grey';   }\nelse if (dvccVoltage === 0)  { statusIcon = '↑ LADE';  statusColor = 'blue';   }\nelse                         { statusIcon = '● FLOAT'; statusColor = 'blue';   }\n\nnode.status({\n    fill: statusColor, shape: 'dot',\n    text: statusIcon+\n          ' | CVL:'+currentCVL.toFixed(2)+'V (max:'+lastMaxCVL.toFixed(2)+', Δ:'+deltaVal.toFixed(2)+')'+\n          ' | DVCC:'+dvccVoltage+'V'+\n          ' | KW'+currentKW+' letzte:KW'+lastFullKW+' ('+lastFullDate+')'+\n          ' | n='+msgCount+' full='+fullChargeCount+\n          ' | '+nowTimeStr\n});\n\nreturn [{ payload: dvccVoltage }, fullChargeDetected ? { payload: JSON.stringify(history, null, 2) } : null];\n",
         "outputs": 2,
         "timeout": "",
         "noerr": 0,
@@ -464,7 +527,7 @@
         "z": "0feaaf0c3923705a",
         "g": "fe715181731c0d5d",
         "name": "DVCC Tracker",
-        "func": "var d = new Date();\nvar t = ('0'+d.getHours()).slice(-2)+':'+\n        ('0'+d.getMinutes()).slice(-2)+':'+\n        ('0'+d.getSeconds()).slice(-2);\n\nvar count = context.get('writeCount') || 0;\ncount++;\ncontext.set('writeCount', count);\n\nvar v = msg.payload;\nvar label;\nif (v === 0) label = \"DVCC=0 (BMS frei)\";\nelse label = \"DVCC=\"+v+\"V (Float)\";\n\nnode.status({\n    fill: v === 0 ? \"blue\" : \"green\",\n    shape: \"dot\",\n    text: label+\" | writes:\"+count+\" | \"+t\n});\n\nreturn msg;\n",
+        "func": "var d = new Date();\nvar t = ('0'+d.getHours()).slice(-2)+':'+\n        ('0'+d.getMinutes()).slice(-2)+':'+\n        ('0'+d.getSeconds()).slice(-2);\n\nvar count = context.get('writeCount') || 0;\ncount++;\ncontext.set('writeCount', count);\n\nvar v = msg.payload;\nvar label;\nif (v === 0) label = 'DVCC=0 (BMS frei)';\nelse label = 'DVCC='+v+'V';\n\nnode.status({\n    fill: v === 0 ? 'blue' : 'green',\n    shape: 'dot',\n    text: label+' | writes:'+count+' | '+t\n});\n\nreturn msg;\n",
         "outputs": 1,
         "timeout": "",
         "noerr": 0,
@@ -517,7 +580,7 @@
         "payload": "",
         "payloadType": "str",
         "x": 150,
-        "y": 760,
+        "y": 920,
         "wires": [
             [
                 "9b2ad5f82dae497e"
@@ -536,7 +599,7 @@
         "sendError": true,
         "encoding": "none",
         "x": 400,
-        "y": 760,
+        "y": 920,
         "wires": [
             [
                 "dfe01e7e0f345d35"
@@ -549,7 +612,7 @@
         "z": "0feaaf0c3923705a",
         "g": "38d2c4b5e9f7aae9",
         "name": "Load History into Context",
-        "func": "var d = new Date();\nvar t = ('0'+d.getHours()).slice(-2)+':'+\n        ('0'+d.getMinutes()).slice(-2);\n\ntry {\n    var history = JSON.parse(msg.payload);\n    flow.set('volladung_history', history);\n    flow.set('volladung_history_ready', true);\n\n    var last = history.length > 0 ? history[history.length-1] : null;\n    var lastText = last ? (\"letzte: KW\"+last.kw+\" (\"+last.date+\")\") : \"keine Einträge\";\n\n    node.status({\n        fill:'green',\n        shape:'dot',\n        text: '✓ '+history.length+' Einträge | '+lastText+' | geladen '+t\n    });\n} catch (e) {\n    flow.set('volladung_history', []);\n    flow.set('volladung_history_ready', true);\n    node.status({\n        fill:'red',\n        shape:'ring',\n        text:'✗ History leer/ungültig | '+t\n    });\n}\nreturn null;\n",
+        "func": "var d = new Date();\nvar t = ('0'+d.getHours()).slice(-2)+':'+\n        ('0'+d.getMinutes()).slice(-2);\n\ntry {\n    var history = JSON.parse(msg.payload);\n    flow.set('volladung_history', history);\n    flow.set('volladung_history_ready', true);\n\n    var last = history.length > 0 ? history[history.length-1] : null;\n    var lastText = last ? ('letzte: KW'+last.kw+' ('+last.date+')') : 'keine Einträge';\n\n    node.status({\n        fill:'green',\n        shape:'dot',\n        text: '✓ '+history.length+' Einträge | '+lastText+' | geladen '+t\n    });\n} catch (e) {\n    flow.set('volladung_history', []);\n    flow.set('volladung_history_ready', true);\n    node.status({\n        fill:'red',\n        shape:'ring',\n        text:'✗ History leer/ungültig | '+t\n    });\n}\nreturn null;\n",
         "outputs": 0,
         "timeout": "",
         "noerr": 0,
@@ -557,7 +620,7 @@
         "finalize": "",
         "libs": [],
         "x": 670,
-        "y": 760,
+        "y": 920,
         "wires": [],
         "icon": "font-awesome/fa-database"
     },
@@ -574,7 +637,7 @@
         "overwriteFile": true,
         "encoding": "utf8",
         "x": 1000,
-        "y": 760,
+        "y": 920,
         "wires": [
             [
                 "62dd50d63f6871e5"
@@ -595,7 +658,7 @@
         "finalize": "",
         "libs": [],
         "x": 1280,
-        "y": 760,
+        "y": 920,
         "wires": [],
         "icon": "font-awesome/fa-floppy-o"
     },
