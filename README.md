@@ -31,7 +31,7 @@ Full charges are **saved persistently** to a JSON file so a system reboot never 
 |------|----------|
 | `auto` | Automatic — max. 1 full charge per N calendar weeks (configurable via `FULL_CHARGE_INTERVAL_WEEKS`) |
 | `manual` | Force an immediate full charge right now |
-| `bulk` | Stay in conservation mode permanently (55.2 V), no full charge |
+| `bulk` | Stay in conservation mode permanently (`FLOAT_VOLTAGE`), no full charge |
 
 Switch modes using the **Inject nodes** inside the flow.
 
