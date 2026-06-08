@@ -19,7 +19,7 @@ The charge strategy:
 | When | Behavior |
 |------|----------|
 | **Once per configured interval** (default: every 2 calendar weeks) | Charge to full voltage (BMS CVL, e.g. 56.0 V) — full charge for balancing |
-| **All other days** | DVCC limits charge to **55.2 V** (3.45 V/cell) — conservation mode |
+| **All other days** | DVCC limits charge to **`FLOAT_VOLTAGE`** (e.g. 53.9 V) — overrules BMS, conservation mode |
 
 Full charges are **saved persistently** to a JSON file so a system reboot never triggers a duplicate full charge.
 
@@ -121,7 +121,7 @@ Die Ladestrategie:
 | Wann | Verhalten |
 |------|-----------|
 | **1x pro konfiguriertem Intervall** (Standard: alle 2 Kalenderwochen) | Laden auf BMS-Volladespannung (z. B. 56,0 V) — Volladung für Balancing |
-| **Alle anderen Tage** | DVCC begrenzt Ladung auf **55,2 V** (3,45 V/Zelle) — Schonmodus |
+| **Alle anderen Tage** | DVCC begrenzt Ladung auf **`FLOAT_VOLTAGE`** (z. B. 53,9 V) — überschreibt BMS, Schonmodus |
 
 Volladungen werden **persistent gespeichert**, damit ein Neustart keine doppelte Volladung auslöst.
 
