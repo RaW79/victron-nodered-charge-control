@@ -12,7 +12,7 @@ There are two widely held views on LiFePO4 charging: regular full charges suppor
 
 In summer, high PV yield can push the battery to full charge voltage (RCV) once or even multiple times a day depending on consumption and state of charge. The BMS or Victron reduces to float (RFV) automatically afterwards — but each new charge cycle repeats the process.
 
-This flow introduces a time-based strategy that standard systems do not offer: one full charge to 56.0 V *(configurable)* per calendar week for balancing, and float voltage 55.2 V *(configurable)* for the remaining days. How beneficial this is depends on your system and preferences — the flow simply makes it possible.
+This flow introduces a time-based strategy that standard systems do not offer: one full charge to e.g. 56.0 V / 55.2 V (according to CVL from BMS) per calendar week interval *(configurable)* for balancing, and float voltage e.g. 53.9 V *(configurable — overrules BMS floating voltage)* for the remaining days. How beneficial this is depends on your system and preferences — the flow simply makes it possible.
 
 The charge strategy:
 
@@ -114,7 +114,7 @@ Zum Thema LiFePO4-Laden gibt es zwei verbreitete Sichtweisen: Regelmäßige Voll
 
 Im Sommer kann hohe PV-Leistung die Batterie je nach Verbrauch und Ladezustand ein- oder auch mehrmals täglich auf die Volladespannung (RCV) bringen. Das BMS oder Victron reduziert danach automatisch auf die Floatspannung (RFV) — aber jeder neue Ladezyklus beginnt den Prozess erneut.
 
-Dieser Flow ermöglicht eine zeitbasierte Strategie, die Standardsysteme so nicht bieten: einmal pro konfiguriertem Intervall (Standard: alle 2 Kalenderwochen) eine Volladung auf die BMS-CVL-Spannung *(z. B. 56,0 V, konfigurierbar)* für das Balancing, den Rest der Zeit mit 55,2 V Floatspannung *(konfigurierbar)*. Wie sinnvoll das im eigenen System ist, bleibt der persönlichen Einschätzung überlassen — der Flow macht es schlicht möglich.
+Dieser Flow ermöglicht eine zeitbasierte Strategie, die Standardsysteme so nicht bieten: einmal pro konfiguriertem Intervall (Standard: alle 2 Kalenderwochen) eine Volladung auf z. B. 56,0 V / 55,2 V *(gemäß CVL des BMS)* für das Balancing, den Rest der Zeit mit z. B. 53,9 V Floatspannung *(konfigurierbar — überschreibt die BMS-Floatspannung)*. Wie sinnvoll das im eigenen System ist, bleibt der persönlichen Einschätzung überlassen — der Flow macht es schlicht möglich.
 
 Die Ladestrategie:
 
