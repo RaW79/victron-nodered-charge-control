@@ -1,6 +1,6 @@
 # Victron Node-RED — Charge Control for LiFePO4
 
-> Intelligent weekly full-charge management for Victron systems via DVCC and Node-RED.
+> Intelligent charge interval management for Victron systems via DVCC and Node-RED.
 
 ![Flow Overview](charge-control/flow-overview-en.png)
 
@@ -14,11 +14,11 @@ In summer, high PV yield can push the battery to full charge voltage (RCV) once 
 
 This flow introduces a time-based strategy that standard systems do not offer: one full charge to 56.0 V *(configurable)* per calendar week for balancing, and float voltage 55.2 V *(configurable)* for the remaining days. How beneficial this is depends on your system and preferences — the flow simply makes it possible.
 
-The weekly charge strategy:
+The charge strategy:
 
-| Day | Behavior |
-|-----|----------|
-| **Once per calendar week** | Charge to **56.0 V** (3.5 V/cell) — full charge for balancing |
+| When | Behavior |
+|------|----------|
+| **Once per configured interval** (default: every 2 calendar weeks) | Charge to full voltage (BMS CVL, e.g. 56.0 V) — full charge for balancing |
 | **All other days** | DVCC limits charge to **55.2 V** (3.45 V/cell) — conservation mode |
 
 Full charges are **saved persistently** to a JSON file so a system reboot never triggers a duplicate full charge.
@@ -29,7 +29,7 @@ Full charges are **saved persistently** to a JSON file so a system reboot never 
 
 | Mode | Behavior |
 |------|----------|
-| `auto` | Automatic — max. 1 full charge per calendar week |
+| `auto` | Automatic — max. 1 full charge per N calendar weeks (configurable via `FULL_CHARGE_INTERVAL_WEEKS`) |
 | `manual` | Force an immediate full charge right now |
 | `bulk` | Stay in conservation mode permanently (55.2 V), no full charge |
 
@@ -45,11 +45,11 @@ The flow reads the **CVL (Charge Voltage Limit)** from the BMS. When the CVL dro
 
 ## Parameters
 
-| Parameter | Value | Meaning |
-|-----------|-------|---------|
-| `DELTA_V` | 0.5 V | Voltage drop to detect end of full charge |
-| `FLOAT_VOLTAGE` | 55.2 V — 3.45 V/cell | Max charge voltage in conservation weeks |
-| `FULL_VOLTAGE` | 56.0 V — 3.5 V/cell | Max charge voltage for weekly balancing |
+| Parameter | Default | Meaning |
+|-----------|---------|---------|
+| `DELTA_V` | `0.5` | CVL drop (V) that signals a completed full charge |
+| `FLOAT_VOLTAGE` | `55.2` | Conservation charge voltage in V (3.45 V/cell) |
+| `FULL_CHARGE_INTERVAL_WEEKS` | `2` | Minimum calendar weeks between full charges |
 
 ---
 
@@ -114,13 +114,13 @@ Zum Thema LiFePO4-Laden gibt es zwei verbreitete Sichtweisen: Regelmäßige Voll
 
 Im Sommer kann hohe PV-Leistung die Batterie je nach Verbrauch und Ladezustand ein- oder auch mehrmals täglich auf die Volladespannung (RCV) bringen. Das BMS oder Victron reduziert danach automatisch auf die Floatspannung (RFV) — aber jeder neue Ladezyklus beginnt den Prozess erneut.
 
-Dieser Flow ermöglicht eine zeitbasierte Strategie, die Standardsysteme so nicht bieten: einmal pro Kalenderwoche eine Volladung auf 56,0 V *(konfigurierbar)* für das Balancing, der Rest der Woche mit 55,2 V Floatspannung *(konfigurierbar)*. Wie sinnvoll das im eigenen System ist, bleibt der persönlichen Einschätzung überlassen — der Flow macht es schlicht möglich.
+Dieser Flow ermöglicht eine zeitbasierte Strategie, die Standardsysteme so nicht bieten: einmal pro konfiguriertem Intervall (Standard: alle 2 Kalenderwochen) eine Volladung auf die BMS-CVL-Spannung *(z. B. 56,0 V, konfigurierbar)* für das Balancing, den Rest der Zeit mit 55,2 V Floatspannung *(konfigurierbar)*. Wie sinnvoll das im eigenen System ist, bleibt der persönlichen Einschätzung überlassen — der Flow macht es schlicht möglich.
 
-Die wöchentliche Ladestrategie:
+Die Ladestrategie:
 
-| Tag | Verhalten |
-|-----|-----------|
-| **1x pro Kalenderwoche** | Laden auf **56,0 V** (3,5 V/Zelle) — Volladung für Balancing |
+| Wann | Verhalten |
+|------|-----------|
+| **1x pro konfiguriertem Intervall** (Standard: alle 2 Kalenderwochen) | Laden auf BMS-Volladespannung (z. B. 56,0 V) — Volladung für Balancing |
 | **Alle anderen Tage** | DVCC begrenzt Ladung auf **55,2 V** (3,45 V/Zelle) — Schonmodus |
 
 Volladungen werden **persistent gespeichert**, damit ein Neustart keine doppelte Volladung auslöst.
