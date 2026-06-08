@@ -4,9 +4,7 @@ Intelligent LiFePO4 charge management for Victron systems via DVCC and Node-RED.
 
 ## What it does
 
-This flow introduces a time-based full charge strategy that standard Victron configurations do not offer: one full charge to the BMS charge voltage limit (CVL, e.g. 55.2 V or 56.0 V as transmitted by the JK-BMS) per configurable interval — weekly, every two weeks, or any other number of calendar weeks — for cell balancing and SOC calibration. Outside that interval the battery is held at a lower conservation voltage (Float).
-
-For the remaining days the battery is held at a configurable float voltage (default 55.2 V), which overrules the BMS CVL setting via DVCC — keeping the cells at a lower resting voltage and reducing stress between full charge cycles.
+This flow introduces a time-based strategy that standard systems do not offer: one full charge to 56.0 V (configurable) per calendar week for balancing, and float voltage 55.2 V (configurable) for the remaining days. How beneficial this is depends on your system and preferences — the flow simply makes it possible.
 
 Full charge detection is CVL-based: the JK-BMS lowers its CVL once the battery is full. The flow detects this drop and records the event in a persistent history file.
 
