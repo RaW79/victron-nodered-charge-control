@@ -48,7 +48,7 @@ The flow reads the **CVL (Charge Voltage Limit)** from the BMS. When the CVL dro
 | Parameter | Default | Meaning |
 |-----------|---------|---------|
 | `DELTA_V` | `0.5` | CVL drop (V) that signals a completed full charge |
-| `FLOAT_VOLTAGE` | `55.2` | Conservation charge voltage in V (3.45 V/cell) |
+| `FLOAT_VOLTAGE` | `53.9` | Conservation charge voltage in V (overrules BMS float) |
 | `FULL_CHARGE_INTERVAL_WEEKS` | `2` | Minimum calendar weeks between full charges |
 
 ---
