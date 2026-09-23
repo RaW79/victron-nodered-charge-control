@@ -1,15 +1,15 @@
 [
     {
-        "id": "0feaaf0c3923705a",
+        "id": "7c7bdfca332d7026",
         "type": "tab",
-        "label": "Full Charge with History",
+        "label": "Full Charge v4",
         "disabled": false,
-        "info": "# 🔋 Full Charge Control (Victron / DVCC)\n\nControls the DVCC charge voltage of a Victron system with JK-BMS.\n\n## Operating modes\n| Mode     | Behaviour                                                   |\n|----------|-------------------------------------------------------------|\n| `auto`   | Full charge every N calendar weeks (→ FULL_CHARGE_INTERVAL_WEEKS) |\n| `manual` | Forces full charge immediately (DVCC = 0 V / BMS free)     |\n| `bulk`   | Permanent conservation charge (Float = FLOAT_VOLTAGE)       |\n\n## Parameters in the logic node\n- `DELTA_V`                    = 0.5 V  — CVL drop detection\n- `FLOAT_VOLTAGE`              = 53.9 V — Conservation charge voltage\n- `FULL_CHARGE_INTERVAL_WEEKS` = 2      — Full charge every N calendar weeks\n\n## Paths\n- History: `/data/home/nodered/.node-red/history/volladung_history.json`\n- DVCC:    `com.victronenergy.settings → /Settings/SystemSetup/MaxChargeVoltage`\n- CVL:     `com.victronenergy.battery/512 → /Info/MaxChargeVoltage`\n"
+        "info": "# 🔋 Full Charge Control (Victron / DVCC) — v4\n\nControls the DVCC charge voltage of a Victron battery system with JK-BMS.\n\n## Basic Rule\nWhenever **Free** is active (DVCC = 0 V, BMS controls), full-charge detection runs –\nregardless of mode. Every CVL drop ≥ DELTA_V after a peak counts as a\nfull charge and creates a history entry.\n\n## Modes (select \"Charge Control\" on GX / in VRM)\n| Selection | DVCC |\n|---|---|\n| **Auto Charge** | Logic decides |\n| **Manual Conservation** | Conservation voltage |\n| **Manual Free** | 0 V, BMS controls |\n\n### Auto\n- **Conservation charge**, until the set interval (calendar weeks) has elapsed\n  since the last full charge (no history: due immediately)\n- then **Free**, until the BMS confirms full charge via CVL drop –\n  no time limit, may last weeks in winter\n- after detected full charge: history entry, interval restarts,\n  back to conservation charge\n- the actual charge state is shown in the \"Charge\" indicator\n\n### Manual\n- Conservation or Free, permanently as selected, logic never switches on its own\n- in Free mode every full charge is detected, written as `manual` to history\n  and resets the auto interval\n\n### Mode Change\n- History is preserved, detection continues\n- when switching to Auto, the last history entry counts,\n  regardless of whether it came from Auto or Manual\n\n## Display on GX (gui-v2 / VRM Switch-Pane, group \"Full Charge Control\")\n- Select **Charge Control** (Auto Charge / Manual Conservation / Manual Free)\n- **Charge**: Current Conservation / Free (from the actually written DVCC)\n- **Conservation Voltage** and **Full Charge Interval (Weeks)**: input with − / +\n- **Last Full Charge**: left shows date and time of the last history entry,\n  right shows days since then (value field can only be numeric)\n- every detected full charge → Info event in VRM Event Log\n\n## History Entry\n`{ kw, year, date, time, quelle: \"auto\" | \"manual\" }`\nLegacy entries without `time` are shown with date only.\nLegacy entries with `forced: true` originate from the removed failsafe.\n\n## Parameters\nChangeable on GX / Local UI only, not from VRM (group \"Full Charge Control\"), persisted across restarts:\n- **Conservation Voltage**: 52.0–54.4 V, step 0.1 V (default 53.9 V)\n- **Full Charge Interval (Weeks)**: 1–8 calendar weeks (default 2)\n\nIn VRM both values appear read-only (\"Set to\"), fed from the actually active values of the logic.\n\nChanges take effect immediately. A shortened interval can trigger Free immediately;\na lengthened interval during an ongoing full charge aborts it\nand switches to conservation charge. Limits and fallback values are also defined\nin the logic node (values outside the range are ignored).\n\nFixed in logic node:\n- `DELTA_V` = 0.5 V — CVL drop detection\n\n## Paths\n- History: `/data/home/nodered/.node-red/history/volladung_history.json`\n- DVCC:    `com.victronenergy.settings → /Settings/SystemSetup/MaxChargeVoltage`\n- CVL:     `com.victronenergy.battery/512 → /Info/MaxChargeVoltage`\n"
     },
     {
-        "id": "45517fd7734c615d",
+        "id": "88c184b61e9c253a",
         "type": "group",
-        "z": "0feaaf0c3923705a",
+        "z": "7c7bdfca332d7026",
         "name": "  INPUTS",
         "style": {
             "label": true,
@@ -20,24 +20,24 @@
             "stroke": "#a8a8a8"
         },
         "nodes": [
-            "ded2a010d528bca9",
-            "e9ef2d7080227ffb",
-            "f1ae8934649297cf",
-            "5b3b1bfdbcf53828",
-            "8043d8f0d32ebefd",
-            "57062d29196d5801",
-            "a1b2c3d4e5f60001",
-            "beec2f55e4921955"
+            "7bbbee52e1a9c277",
+            "e3761688ae1071ad",
+            "bc7c807fe61559ef",
+            "daf7f67ed90497b8",
+            "4a7c64b5e57853d5",
+            "ac08dd0e4a464378",
+            "c5bc04fcc6982969",
+            "877e4460d9cca558"
         ],
-        "x": 9,
+        "x": 14,
         "y": 99,
-        "w": 292,
-        "h": 580
+        "w": 532,
+        "h": 369.5
     },
     {
-        "id": "5143a28f03cf2d9c",
+        "id": "e7cea7b8cb613aeb",
         "type": "group",
-        "z": "0feaaf0c3923705a",
+        "z": "7c7bdfca332d7026",
         "name": "  LOGIC",
         "style": {
             "label": true,
@@ -48,19 +48,18 @@
             "stroke": "#909090"
         },
         "nodes": [
-            "5d05c8d5fd1bf194",
-            "9c8994a71f0429a0",
-            "b8bff44154174240"
+            "5bb293e64e875099",
+            "614302529151a1ac"
         ],
-        "x": 354,
-        "y": 419,
-        "w": 252,
-        "h": 202
+        "x": 574,
+        "y": 141.5,
+        "w": 232,
+        "h": 239.5
     },
     {
-        "id": "c804c0af6c4f296e",
+        "id": "f289cbe6944d707e",
         "type": "group",
-        "z": "0feaaf0c3923705a",
+        "z": "7c7bdfca332d7026",
         "name": "  FILTER",
         "style": {
             "label": true,
@@ -71,18 +70,18 @@
             "stroke": "#a0a0a0"
         },
         "nodes": [
-            "e714979e071c1f58",
-            "fe1a85b4b2de6dc2"
+            "974bd5ae572a6836",
+            "f73d9a2343be4e71"
         ],
-        "x": 634,
-        "y": 259,
+        "x": 834,
+        "y": 59,
         "w": 192,
         "h": 142
     },
     {
-        "id": "fe715181731c0d5d",
+        "id": "c8a2cedbdb927c00",
         "type": "group",
-        "z": "0feaaf0c3923705a",
+        "z": "7c7bdfca332d7026",
         "name": "  OUTPUT",
         "style": {
             "label": true,
@@ -93,19 +92,49 @@
             "stroke": "#888888"
         },
         "nodes": [
-            "16bf76fe1ae6db8d",
-            "4e03c4118184fcfa",
-            "b831379606120465"
+            "a5c4dc983a6136e3",
+            "7ab7264133bdaa67",
+            "a90d2026efa28e42",
+            "b01a4ee6a53dd6b4",
+            "2ce8d4e98f6f8cb4",
+            "c35ebc75ce7c95af",
+            "8a3f13f54ae5433c",
+            "ef7a9d158e73a75b"
         ],
-        "x": 894,
-        "y": 259,
-        "w": 532,
-        "h": 142
+        "x": 1054,
+        "y": 59,
+        "w": 652,
+        "h": 442
     },
     {
-        "id": "38d2c4b5e9f7aae9",
+        "id": "c9d5a7e548a63287",
         "type": "group",
-        "z": "0feaaf0c3923705a",
+        "z": "7c7bdfca332d7026",
+        "name": "  TEST  –  affects live logic!",
+        "style": {
+            "label": true,
+            "label-position": "nw",
+            "color": "#3a3a3a",
+            "fill": "#fff4e5",
+            "fill-opacity": "0.5",
+            "stroke": "#d9a441"
+        },
+        "nodes": [
+            "c97fb8cc3a6fb020",
+            "73bb8ab916a17ac2",
+            "3f0181ab558c8f7f",
+            "d6b78afc16d7a11b",
+            "2d5689a567d6f13f"
+        ],
+        "x": 14,
+        "y": 479,
+        "w": 552,
+        "h": 162
+    },
+    {
+        "id": "d5ccbe0360ef4d7f",
+        "type": "group",
+        "z": "7c7bdfca332d7026",
         "name": "  PERSISTENCE (History)",
         "style": {
             "label": true,
@@ -116,32 +145,33 @@
             "stroke": "#a8a8a8"
         },
         "nodes": [
-            "d8d84aef9838f156",
-            "9b2ad5f82dae497e",
-            "dfe01e7e0f345d35",
-            "018a33cafcea1ff7",
-            "62dd50d63f6871e5"
+            "9cf8332ae9f00888",
+            "60159a9b7f5e4173",
+            "7ecd4c3e0242fa60",
+            "fbfe372897cb104d",
+            "d4b2b5e42d97cfd7"
         ],
         "x": 14,
-        "y": 699,
-        "w": 1362,
+        "y": 659,
+        "w": 1312,
         "h": 82
     },
     {
-        "id": "17b3ed613bc9455a",
+        "id": "e0212c220a32fd0d",
         "type": "comment",
-        "z": "0feaaf0c3923705a",
-        "name": "🔋  Full Charge Control  ·  Victron DVCC  ·  JK-BMS",
-        "info": "Full Charge Logic Node (Victron / DVCC)\n\nOperating modes:\nauto:   Full charge every N calendar weeks (FULL_CHARGE_INTERVAL_WEEKS)\nmanual: Forces full charge immediately (DVCC=0V / BMS free)\nbulk:   Permanent conservation charge (Float FLOAT_VOLTAGE)\n\nTriggers:\n- CVL from JK-BMS (onlyChanges)\n- Heartbeat 1x/hour (cron 0 * * * *)\n- Mode inject\n\nContext:\n- last full charge (week + year + date)\n- last max CVL\n- mode\n\nParameters:\nDELTA_V, FLOAT_VOLTAGE, FULL_CHARGE_INTERVAL_WEEKS",
-        "x": 200,
+        "z": "7c7bdfca332d7026",
+        "name": "🔋  Full Charge Control v4  ·  Victron DVCC  ·  JK-BMS  —  see Tab Info for details",
+        "info": "",
+        "x": 330,
         "y": 40,
         "wires": []
     },
     {
-        "id": "ded2a010d528bca9",
+        "id": "7bbbee52e1a9c277",
         "type": "victron-input-battery",
-        "z": "0feaaf0c3923705a",
-        "g": "45517fd7734c615d",
+        "z": "7c7bdfca332d7026",
+        "g": "88c184b61e9c253a",
+        "outputs": 1,
         "service": "com.victronenergy.battery/512",
         "path": "/Info/MaxChargeVoltage",
         "serviceObj": {
@@ -155,9 +185,8 @@
             "name": "CVL - Charge Voltage Limit (V)"
         },
         "name": "CVL from JK-BMS",
-        "onlyChanges": true,
+        "onlyChanges": false,
         "roundValues": "3",
-        "outputs": 1,
         "conditionalMode": false,
         "outputTrue": "",
         "outputFalse": "",
@@ -166,145 +195,20 @@
         "y": 140,
         "wires": [
             [
-                "b8bff44154174240"
+                "5bb293e64e875099"
             ]
         ]
     },
     {
-        "id": "e9ef2d7080227ffb",
+        "id": "e3761688ae1071ad",
         "type": "inject",
-        "z": "0feaaf0c3923705a",
-        "g": "45517fd7734c615d",
-        "name": "Simulated CVL 56V",
+        "z": "7c7bdfca332d7026",
+        "g": "88c184b61e9c253a",
+        "name": "Heartbeat (hourly)",
         "props": [
             {
                 "p": "payload"
             },
-            {
-                "p": "topic",
-                "vt": "str"
-            }
-        ],
-        "repeat": "",
-        "crontab": "",
-        "once": false,
-        "payload": "56",
-        "payloadType": "num",
-        "x": 160,
-        "y": 200,
-        "wires": [
-            [
-                "b8bff44154174240"
-            ]
-        ]
-    },
-    {
-        "id": "f1ae8934649297cf",
-        "type": "inject",
-        "z": "0feaaf0c3923705a",
-        "g": "45517fd7734c615d",
-        "name": "Simulated CVL 55V",
-        "props": [
-            {
-                "p": "payload"
-            },
-            {
-                "p": "topic",
-                "vt": "str"
-            }
-        ],
-        "repeat": "",
-        "crontab": "",
-        "once": false,
-        "payload": "55",
-        "payloadType": "num",
-        "x": 160,
-        "y": 260,
-        "wires": [
-            [
-                "b8bff44154174240"
-            ]
-        ]
-    },
-    {
-        "id": "5b3b1bfdbcf53828",
-        "type": "inject",
-        "z": "0feaaf0c3923705a",
-        "g": "45517fd7734c615d",
-        "name": "Mode: Manual",
-        "props": [
-            {
-                "p": "payload"
-            }
-        ],
-        "repeat": "",
-        "crontab": "",
-        "once": false,
-        "payload": "manual",
-        "payloadType": "str",
-        "x": 150,
-        "y": 360,
-        "wires": [
-            [
-                "b8bff44154174240"
-            ]
-        ]
-    },
-    {
-        "id": "8043d8f0d32ebefd",
-        "type": "inject",
-        "z": "0feaaf0c3923705a",
-        "g": "45517fd7734c615d",
-        "name": "Mode: Bulk / Conservation",
-        "props": [
-            {
-                "p": "payload"
-            }
-        ],
-        "repeat": "",
-        "crontab": "",
-        "once": false,
-        "payload": "bulk",
-        "payloadType": "str",
-        "x": 160,
-        "y": 420,
-        "wires": [
-            [
-                "b8bff44154174240"
-            ]
-        ]
-    },
-    {
-        "id": "57062d29196d5801",
-        "type": "inject",
-        "z": "0feaaf0c3923705a",
-        "g": "45517fd7734c615d",
-        "name": "Mode: Automatic",
-        "props": [
-            {
-                "p": "payload"
-            }
-        ],
-        "repeat": "",
-        "crontab": "",
-        "once": false,
-        "payload": "auto",
-        "payloadType": "str",
-        "x": 155,
-        "y": 480,
-        "wires": [
-            [
-                "b8bff44154174240"
-            ]
-        ]
-    },
-    {
-        "id": "a1b2c3d4e5f60001",
-        "type": "inject",
-        "z": "0feaaf0c3923705a",
-        "g": "45517fd7734c615d",
-        "name": "Heartbeat (Week Check)",
-        "props": [
             {
                 "p": "topic",
                 "vt": "str"
@@ -317,128 +221,167 @@
         "topic": "heartbeat",
         "payload": "",
         "payloadType": "str",
-        "x": 165,
-        "y": 540,
+        "x": 160,
+        "y": 200,
         "wires": [
             [
-                "b8bff44154174240"
+                "5bb293e64e875099"
             ]
         ]
     },
     {
-        "id": "beec2f55e4921955",
-        "type": "status",
-        "z": "0feaaf0c3923705a",
-        "g": "45517fd7734c615d",
-        "name": "Track CVL value",
-        "scope": [
-            "ded2a010d528bca9"
-        ],
-        "x": 170,
-        "y": 620,
+        "id": "bc7c807fe61559ef",
+        "type": "victron-virtual-switch",
+        "z": "7c7bdfca332d7026",
+        "g": "88c184b61e9c253a",
+        "name": "Charge Control",
+        "outputs": 2,
+        "switch_1_type": 6,
+        "switch_1_min": 0,
+        "switch_1_max": "",
+        "switch_1_initial": 0,
+        "switch_1_label": "[\"Auto Charge\", \"Manual Conservation\", \"Manual Free\"]",
+        "switch_1_unit": "",
+        "switch_1_step": 1,
+        "switch_1_customname": "Charge Control",
+        "switch_1_group": "Full Charge Control",
+        "switch_1_include_measurement": false,
+        "switch_1_rgb_color_wheel": false,
+        "switch_1_cct_wheel": false,
+        "switch_1_rgb_white_dimmer": false,
+        "switch_1_show_ui_input": 1,
+        "switch_1_passthrough_mode": "always",
+        "x": 140,
+        "y": 260,
         "wires": [
-            []
+            [],
+            [
+                "daf7f67ed90497b8"
+            ]
         ]
     },
     {
-        "id": "b8bff44154174240",
+        "id": "daf7f67ed90497b8",
         "type": "function",
-        "z": "0feaaf0c3923705a",
-        "g": "5143a28f03cf2d9c",
-        "name": "Full Charge Logic",
-        "func": "// =====================\n// Full Charge Logic (Victron) — FIXED v2\n// Output 1: DVCC voltage\n// Output 2: Write history (on full charge only)\n//\n// Changelog v2:\n// - FIX (Bug 1): Heartbeat with a known lastDVCC now only re-emits\n//   that cached value and returns immediately — it no longer runs\n//   through the regular CVL detection logic (deltaVal/lastMaxCVL/\n//   history write). Previously a heartbeat arriving between \"due\"\n//   and the real CVL drop could spuriously trigger fullChargeDetected\n//   using a stale lastCVL and reset kwDiff to 0 prematurely.\n// - NEW: Fail-safe timeout. If DVCC=0 has been released (kwDiff due)\n//   but no real CVL drop is detected within FAILSAFE_HOURS, force a\n//   hard reset to FLOAT_VOLTAGE + node.warn(), so no stale release\n//   stays open indefinitely.\n// - NEW: node.warn() on every fullChargeDetected and on the\n//   lastMaxCVL undefined-fallback (e.g. after restart), for easier\n//   post-mortem analysis.\n// =====================\n\n// ----- Configurable parameters -----\n\nvar DELTA_V = 0.5;\nvar FLOAT_VOLTAGE = 53.9;\nvar FULL_CHARGE_INTERVAL_WEEKS = 2;  // 1 = weekly, 2 = every 2 weeks, etc.\nvar FAILSAFE_HOURS = 40;             // Fail-safe: force reset after X hours without CVL drop\n\nfunction getKW(date) {\n    var d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));\n    var dayNum = d.getUTCDay() || 7;\n    d.setUTCDate(d.getUTCDate() + 4 - dayNum);\n    var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));\n    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);\n}\n\nfunction weeksDiff(kwA, yearA, kwB, yearB) {\n    if (yearA === yearB) return kwB - kwA;\n    var lastKWofYearA = getKW(new Date(Date.UTC(yearA, 11, 28)));\n    return (lastKWofYearA - kwA) + kwB;\n}\n\nfunction hhmm(d) {\n    var h = ('0'+d.getHours()).slice(-2);\n    var m = ('0'+d.getMinutes()).slice(-2);\n    var s = ('0'+d.getSeconds()).slice(-2);\n    return h+':'+m+':'+s;\n}\n\nvar now = new Date();\nvar currentKW = getKW(now);\nvar currentYear = now.getFullYear();\nvar currentDateStr = now.toISOString().slice(0,10);\nvar nowTimeStr = hhmm(now);\n\n// ----- Guard: history must be loaded -----\nif (!flow.get('volladung_history_ready')) {\n    node.status({ fill: 'yellow', shape: 'ring',\n        text: '⏳ waiting for history... | ' + nowTimeStr });\n    return null;\n}\n\n// ----- Heartbeat: re-emit cached value only, NO detection logic -----\n// FIX Bug 1: with a known lastDVCC, only re-emit it and return.\n// No longer falls through into regular CVL processing.\nif (msg.topic === \"heartbeat\") {\n    var lastDVCC = context.get('lastDVCC');\n\n    if (typeof lastDVCC === \"number\") {\n        // Fail-safe check: if released too long ago without a real CVL drop\n        var releaseStart = context.get('releaseStart');\n        if (lastDVCC === 0 && releaseStart) {\n            var hoursSinceRelease = (now.getTime() - releaseStart) / 3600000;\n            if (hoursSinceRelease > FAILSAFE_HOURS) {\n                node.warn('Full-charge timeout: CVL drop not detected for ' +\n                    hoursSinceRelease.toFixed(1) + 'h, forcing reset to float. W' +\n                    currentKW + ' | ' + nowTimeStr);\n\n                var history = flow.get('volladung_history') || [];\n                var entry = { kw: currentKW, year: currentYear, date: currentDateStr, forced: true };\n                history.push(entry);\n                flow.set(\"volladung_history\", history);\n\n                context.set('lastMaxCVL', undefined);\n                context.set('lastDVCC', FLOAT_VOLTAGE);\n                context.set('releaseStart', null);\n\n                node.status({ fill: 'red', shape: 'dot',\n                    text: '⚠ FAILSAFE-RESET | W'+currentKW+' | '+nowTimeStr });\n\n                return [{payload: FLOAT_VOLTAGE}, {payload: JSON.stringify(history, null, 2)}];\n            }\n        }\n\n        node.status({ fill: 'cyan', shape: 'dot',\n            text: '⏱ HB(cached) | DVCC:'+lastDVCC+'V | '+nowTimeStr });\n        return [{payload: lastDVCC}, null];\n    }\n\n    // No lastDVCC known (e.g. after restart) -> week-number-only recalculation\n    var histHB = flow.get('volladung_history') || [];\n    var lastKWHB = histHB.length > 0 ? histHB[histHB.length-1].kw : currentKW;\n    var lastYearHB = histHB.length > 0 ? (histHB[histHB.length-1].year || currentYear) : currentYear;\n    var lastDateHB = histHB.length > 0 ? histHB[histHB.length-1].date : currentDateStr;\n    var modusHB = context.get('modus') || 'auto';\n\n    var dvccHB;\n    if (modusHB === 'manual') dvccHB = 0;\n    else if (modusHB === 'bulk') dvccHB = FLOAT_VOLTAGE;\n    else dvccHB = (weeksDiff(lastKWHB, lastYearHB, currentKW, currentYear) >= FULL_CHARGE_INTERVAL_WEEKS) ? 0 : FLOAT_VOLTAGE;\n\n    context.set('lastDVCC', dvccHB);\n    if (dvccHB === 0 && !context.get('releaseStart')) {\n        context.set('releaseStart', now.getTime());\n    }\n    node.status({ fill: 'cyan', shape: 'dot',\n        text: '⏱ HB(W-only, no cache) | DVCC:'+dvccHB+'V | W'+currentKW+' last:W'+lastKWHB+' ('+lastDateHB+') | Interval:'+FULL_CHARGE_INTERVAL_WEEKS+'W | '+nowTimeStr });\n\n    return [{payload: dvccHB}, null];\n}\n\n// ----- Load history -----\nvar history = flow.get('volladung_history');\nif (!history) history = [];\n\nvar lastEntry = history.length > 0 ? history[history.length-1] : null;\nvar lastFullKW = lastEntry ? lastEntry.kw : currentKW;\nvar lastFullYear = lastEntry ? (lastEntry.year || currentYear) : currentYear;\nvar lastFullDate = lastEntry ? lastEntry.date : currentDateStr;\n\nvar lastMaxCVL = context.get('lastMaxCVL');\nvar modus = context.get('modus');\nif (!modus) modus = \"auto\";\n\nvar msgCount = context.get('msgCount') || 0;\nvar fullChargeCount = context.get('fullChargeCount') || 0;\n\n// ----- Mode inject -----\nif (typeof msg.payload === \"string\") {\n    if ([\"manual\",\"bulk\",\"auto\"].indexOf(msg.payload) !== -1) {\n        modus = msg.payload;\n        context.set(\"modus\", modus);\n        context.set(\"lastModeChange\", nowTimeStr);\n        node.status({ fill:\"blue\", shape:\"dot\",\n            text: \"⚙ \"+modus.toUpperCase()+\" | W\"+currentKW+\" | last: W\"+lastFullKW+\" (\"+lastFullDate+\") | Interval:\"+FULL_CHARGE_INTERVAL_WEEKS+\"W | \"+nowTimeStr });\n    }\n    return null;\n}\n\n// ----- CVL input -----\nif (typeof msg.payload !== \"number\") return null;\nvar currentCVL = msg.payload;\nmsgCount++;\ncontext.set('msgCount', msgCount);\ncontext.set('lastCVL', currentCVL);\ncontext.set('lastUpdate', nowTimeStr);\n\nif (lastMaxCVL === undefined) {\n    lastMaxCVL = currentCVL;\n    node.warn('lastMaxCVL was undefined (e.g. after restart), initialising to currentCVL=' +\n        currentCVL.toFixed(2) + 'V. Any full-charge cycle running before this point ' +\n        'will not be detected retroactively.');\n}\n\nvar dvccVoltage;\nvar fullChargeDetected = false;\nvar deltaVal = lastMaxCVL - currentCVL;\n\nvar kwDiff = weeksDiff(lastFullKW, lastFullYear, currentKW, currentYear);\n\n// ----- Logic -----\nif (modus === \"manual\") {\n    dvccVoltage = 0;\n}\nelse if (modus === \"bulk\") {\n    dvccVoltage = FLOAT_VOLTAGE;\n}\nelse {\n    if (deltaVal >= DELTA_V) {\n        if (kwDiff >= FULL_CHARGE_INTERVAL_WEEKS) {\n\n            fullChargeDetected = true;\n            fullChargeCount++;\n            context.set('fullChargeCount', fullChargeCount);\n\n            var entry = { kw: currentKW, year: currentYear, date: currentDateStr };\n            history.push(entry);\n            flow.set(\"volladung_history\", history);\n\n            node.warn('Full charge detected: CVL drop ' + lastMaxCVL.toFixed(2) + 'V -> ' +\n                currentCVL.toFixed(2) + 'V (Δ' + deltaVal.toFixed(2) + 'V) at W' + currentKW +\n                ' (' + currentDateStr + '). History entry written.');\n\n            lastFullKW = currentKW;\n            lastFullYear = currentYear;\n            lastFullDate = currentDateStr;\n            kwDiff = 0;\n        }\n        lastMaxCVL = currentCVL;\n    }\n\n    if (currentCVL > lastMaxCVL) { lastMaxCVL = currentCVL; }\n\n    dvccVoltage = (kwDiff >= FULL_CHARGE_INTERVAL_WEEKS) ? 0 : FLOAT_VOLTAGE;\n}\n\ncontext.set(\"lastMaxCVL\", lastMaxCVL);\ncontext.set(\"modus\", modus);\ncontext.set(\"lastDVCC\", dvccVoltage);\n\n// Fail-safe timestamp: set when DVCC=0 is released, cleared when back to float.\nif (dvccVoltage === 0) {\n    if (!context.get('releaseStart')) context.set('releaseStart', now.getTime());\n} else {\n    context.set('releaseStart', null);\n}\n\n// ----- Status display -----\nvar statusIcon, statusColor;\nif (fullChargeDetected)       { statusIcon = \"✓ FULL\";  statusColor = \"green\"; }\nelse if (modus === \"manual\") { statusIcon = \"⚡ MAN\";   statusColor = \"yellow\"; }\nelse if (modus === \"bulk\")   { statusIcon = \"≈ BULK\";  statusColor = \"grey\"; }\nelse if (dvccVoltage === 0)  { statusIcon = \"↑ CHRG\";  statusColor = \"blue\"; }\nelse                          { statusIcon = \"● FLOAT\"; statusColor = \"blue\"; }\n\nnode.status({ fill: statusColor, shape: \"dot\", text:\n    statusIcon+\n    \" | CVL:\"+currentCVL.toFixed(2)+\"V (max:\"+lastMaxCVL.toFixed(2)+\", Δ:\"+deltaVal.toFixed(2)+\")\"+\n    \" | DVCC:\"+dvccVoltage+\"V\"+\n    \" | W\"+currentKW+\" last:W\"+lastFullKW+\" (\"+lastFullDate+\") Δ\"+kwDiff+\"/\"+FULL_CHARGE_INTERVAL_WEEKS+\"W\"+\n    \" | n=\"+msgCount+\" full=\"+fullChargeCount+\n    \" | \"+nowTimeStr });\n\nvar msgDVCC = { payload: dvccVoltage };\nvar msgHistory = null;\nif (fullChargeDetected) {\n    msgHistory = { payload: JSON.stringify(history, null, 2) };\n}\nreturn [msgDVCC, msgHistory];",
-        "outputs": 2,
+        "z": "7c7bdfca332d7026",
+        "g": "88c184b61e9c253a",
+        "name": "Selection → Mode",
+        "func": "// Dropdown \"Charge Control\" -> mode\n// Order = order of options in the switch node\nvar MODES = ['auto', 'manual_schon', 'manual_frei'];   // Auto Charge | Manual Conservation | Manual Free\n\nif (msg.source_path !== '/SwitchableOutput/output_1/Dimming') return null;\nvar modus = MODES[Number(msg.payload)];\nif (!modus) return null;\n\nif (context.get('lastModus') === modus) return null;\ncontext.set('lastModus', modus);\n\nnode.status({ fill: modus === 'auto' ? 'blue' : 'yellow', shape: 'dot', text: modus });\nreturn { topic: 'modus', payload: modus };\n",
+        "outputs": 1,
         "timeout": "",
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 480,
-        "y": 460,
+        "x": 410,
+        "y": 260,
         "wires": [
             [
-                "e714979e071c1f58"
+                "5bb293e64e875099"
+            ]
+        ],
+        "icon": "font-awesome/fa-random"
+    },
+    {
+        "id": "5bb293e64e875099",
+        "type": "function",
+        "z": "7c7bdfca332d7026",
+        "g": "e7cea7b8cb613aeb",
+        "name": "Full Charge Logic v4",
+        "func": "// =====================\n// Full Charge Logic — v4\n// See tab info for model description.\n// Inputs:   msg.topic \"modus\" (auto | manual_frei | manual_schon)\n//           msg.topic \"param_float\"    (conservation voltage from GX)\n//           msg.topic \"param_interval\" (interval in weeks from GX)\n//           msg.topic \"heartbeat\"\n//           number = CVL from JK-BMS\n// Outputs:  1 DVCC voltage | 2 History (JSON) | 3 Charge indicator (0/1)\n//           4 Last Full Charge indicator (label = date/time, value = days) | 5 VRM event\n//           6 Conservation voltage indicator (VRM only) | 7 Full charge interval indicator (VRM only)\n// =====================\n\nvar DELTA_V = 0.5;                    // CVL drop that counts as full charge\n\n// Conservation voltage and interval come from GX (group Full Charge Control).\n// Limits and fallback values if nothing valid has been received:\nvar FLOAT_MIN = 52.0, FLOAT_MAX = 54.4, FLOAT_DEFAULT = 53.9;\nvar INTERVAL_MIN = 1, INTERVAL_MAX = 8, INTERVAL_DEFAULT = 2;\n\nfunction floatVoltage() {\n    var v = context.get('floatV');\n    return (typeof v === 'number' && v >= FLOAT_MIN && v <= FLOAT_MAX) ? v : FLOAT_DEFAULT;\n}\nfunction intervalWeeks() {\n    var w = context.get('intervalW');\n    return (typeof w === 'number' && w >= INTERVAL_MIN && w <= INTERVAL_MAX) ? w : INTERVAL_DEFAULT;\n}\n\nvar DAY = 86400000;\nvar now = new Date();\nfunction pad(n) { return ('0' + n).slice(-2); }\nvar today = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());\nvar nowT = pad(now.getHours()) + ':' + pad(now.getMinutes());\n\nfunction dayUTC(s) { var p = s.split('-'); return Date.UTC(+p[0], +p[1] - 1, +p[2]); }\nfunction mondayUTC(s) { var t = dayUTC(s); return t - ((new Date(t).getUTCDay() + 6) % 7) * DAY; }\nfunction getKW(date) {\n    var d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));\n    var dayNum = d.getUTCDay() || 7;\n    d.setUTCDate(d.getUTCDate() + 4 - dayNum);\n    var yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));\n    return Math.ceil((((d - yearStart) / DAY) + 1) / 7);\n}\nfunction sendIfChanged(key, val) {\n    if (context.get(key) === val) return null;\n    context.set(key, val);\n    return { payload: val };\n}\n\nvar MODUS_TEXT = { auto: 'AUTO', manual_frei: 'MANUAL', manual_schon: 'MANUAL' };\n\nfunction evaluate(detected) {\n    var modus = context.get('modus') || 'auto';\n    var history = flow.get('volladung_history') || [];\n    var msgHist = null, msgEvent = null;\n\n    if (detected) {\n        history.push({ kw: getKW(now), year: now.getFullYear(), date: today, time: nowT, quelle: detected.quelle });\n        flow.set('volladung_history', history);\n        msgHist = { payload: JSON.stringify(history, null, 2) };\n        msgEvent = { payload: 'Full charge detected (' + (detected.quelle === 'auto' ? 'Auto' : 'Manual') +\n            '): CVL ' + detected.von.toFixed(2) + ' V -> ' + detected.nach.toFixed(2) + ' V' };\n    }\n\n    var last = history.length ? history[history.length - 1] : null;\n    var lastDate = (last && typeof last.date === 'string') ? last.date : null;\n    var weeks = lastDate ? Math.round((mondayUTC(today) - mondayUTC(lastDate)) / (7 * DAY)) : null;\n    var days = lastDate ? Math.floor((dayUTC(today) - dayUTC(lastDate)) / DAY) : null;\n\n    var FLOAT_VOLTAGE = floatVoltage();\n    var FULL_CHARGE_INTERVAL_WEEKS = intervalWeeks();\n    // Extended interval during ongoing full charge -> abort, switch to conservation (intended)\n    var dvcc;\n    if (modus === 'manual_frei') dvcc = 0;\n    else if (modus === 'manual_schon') dvcc = FLOAT_VOLTAGE;\n    else dvcc = (weeks === null || weeks >= FULL_CHARGE_INTERVAL_WEEKS) ? 0 : FLOAT_VOLTAGE;\n    context.set('lastDVCC', dvcc);\n\n    var frei = dvcc === 0 ? 1 : 0;\n\n    var msgLadung = sendIfChanged('ind_ladung', frei);\n    // Display value is numeric only -> date/time of history entry is in left label\n    var msgLetzte = null;\n    if (lastDate) {\n        var p = lastDate.split('-');\n        var title = p[2] + '.' + p[1] + '.' + p[0] + (last.time ? ' ' + last.time : '');\n        if (context.get('ind_letzte') !== title + '|' + days) {\n            context.set('ind_letzte', title + '|' + days);\n            msgLetzte = { payload: { 'GenericInput/0/Settings/CustomName': 'Last Full Charge', 'GenericInput/0/Settings/PrimaryLabel': title, 'Value': days } };\n        }\n    }\n\n    var cvl = context.get('lastCVL');\n    var peak = context.get('peakCVL');\n    node.status({\n        fill: detected ? 'green' : (frei ? 'blue' : 'grey'),\n        shape: 'dot',\n        text: (detected ? '✓ FULL CHARGE | ' : '') +\n            MODUS_TEXT[modus] + ' · ' + (frei ? 'FREE' : 'CONS') +\n            ' | DVCC ' + dvcc + 'V' +\n            ' | Cons ' + FLOAT_VOLTAGE + 'V · ' + FULL_CHARGE_INTERVAL_WEEKS + 'W' +\n            (typeof cvl === 'number' ? ' | CVL ' + cvl.toFixed(2) + ' (Peak ' + peak.toFixed(2) + ')' : '') +\n            ' | last ' + (lastDate ? lastDate + (last.time ? ' ' + last.time : '') + (last.quelle ? ' ' + last.quelle : '') + ', ' + days + 'd' : '–') +\n            ' | ' + nowT\n    });\n\n    // Active parameters for read-only display in VRM\n    var msgFV = sendIfChanged('ind_float', FLOAT_VOLTAGE);\n    var msgIV = sendIfChanged('ind_interval', FULL_CHARGE_INTERVAL_WEEKS);\n\n    return [{ payload: dvcc }, msgHist, msgLadung, msgLetzte, msgEvent, msgFV, msgIV];\n}\n\n// ----- Parameters from GX -----\nif (msg.topic === 'param_float' || msg.topic === 'param_interval') {\n    var val = Number(msg.payload);\n    if (msg.topic === 'param_float') {\n        val = Math.round(val * 10) / 10;\n        if (!(val >= FLOAT_MIN && val <= FLOAT_MAX)) {\n            node.warn('Conservation voltage ' + msg.payload + ' outside ' + FLOAT_MIN + '–' + FLOAT_MAX + ' V, ignored');\n            return null;\n        }\n        context.set('floatV', val);\n    } else {\n        val = Math.round(val);\n        if (!(val >= INTERVAL_MIN && val <= INTERVAL_MAX)) {\n            node.warn('Interval ' + msg.payload + ' outside ' + INTERVAL_MIN + '–' + INTERVAL_MAX + ' weeks, ignored');\n            return null;\n        }\n        context.set('intervalW', val);\n    }\n    if (!flow.get('volladung_history_ready')) {\n        node.status({ fill: 'yellow', shape: 'ring', text: msg.topic + '=' + val + ' stored, waiting for history | ' + nowT });\n        return null;\n    }\n    return evaluate(null);\n}\n\n// ----- Mode from switch -----\nif (msg.topic === 'modus') {\n    if (['auto', 'manual_frei', 'manual_schon'].indexOf(msg.payload) === -1) return null;\n    context.set('modus', msg.payload);\n    if (!flow.get('volladung_history_ready')) {\n        node.status({ fill: 'yellow', shape: 'ring', text: 'Mode ' + msg.payload + ' stored, waiting for history | ' + nowT });\n        return null;\n    }\n    return evaluate(null);\n}\n\n// ----- Guard: history must be loaded -----\nif (!flow.get('volladung_history_ready')) {\n    node.status({ fill: 'yellow', shape: 'ring', text: 'waiting for history | ' + nowT });\n    return null;\n}\n\n// ----- Heartbeat: re-evaluate interval (week change), no detection -----\nif (msg.topic === 'heartbeat') return evaluate(null);\n\n// ----- CVL -----\nif (typeof msg.payload !== 'number') return null;\nvar cvlNow = msg.payload;\n\nvar lastSeen = context.get('lastSeenCVL');\nif (lastSeen !== undefined && cvlNow === lastSeen) return null;   // duplicate\ncontext.set('lastSeenCVL', cvlNow);\ncontext.set('lastCVL', cvlNow);\n\nvar peakNow = context.get('peakCVL');\nif (peakNow === undefined) peakNow = cvlNow;   // after restart: current value as baseline\n\nvar detected = null;\nif (peakNow - cvlNow >= DELTA_V) {\n    // Full charge only counts when Free is currently active – same in Auto and Manual\n    if (context.get('lastDVCC') === 0) {\n        detected = { quelle: (context.get('modus') || 'auto') === 'auto' ? 'auto' : 'manual', von: peakNow, nach: cvlNow };\n    }\n    peakNow = cvlNow;\n}\nif (cvlNow > peakNow) peakNow = cvlNow;\ncontext.set('peakCVL', peakNow);\n\nreturn evaluate(detected);\n",
+        "outputs": 7,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 690,
+        "y": 220,
+        "wires": [
+            [
+                "974bd5ae572a6836"
             ],
             [
-                "018a33cafcea1ff7"
+                "fbfe372897cb104d"
+            ],
+            [
+                "b01a4ee6a53dd6b4"
+            ],
+            [
+                "2ce8d4e98f6f8cb4"
+            ],
+            [
+                "c35ebc75ce7c95af"
+            ],
+            [
+                "8a3f13f54ae5433c"
+            ],
+            [
+                "ef7a9d158e73a75b"
             ]
         ],
         "icon": "font-awesome/fa-bolt"
     },
     {
-        "id": "5d05c8d5fd1bf194",
-        "type": "debug",
-        "z": "0feaaf0c3923705a",
-        "g": "5143a28f03cf2d9c",
-        "name": "Debug Logic OUT",
-        "active": false,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "payload",
-        "targetType": "msg",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 470,
-        "y": 520,
-        "wires": []
-    },
-    {
-        "id": "9c8994a71f0429a0",
+        "id": "614302529151a1ac",
         "type": "catch",
-        "z": "0feaaf0c3923705a",
-        "g": "5143a28f03cf2d9c",
-        "name": "Catch Logic Error",
+        "z": "7c7bdfca332d7026",
+        "g": "e7cea7b8cb613aeb",
+        "name": "Catch Logic Errors",
         "scope": [
-            "b8bff44154174240"
+            "5bb293e64e875099",
+            "daf7f67ed90497b8"
         ],
         "uncaught": false,
-        "x": 470,
-        "y": 580,
+        "x": 690,
+        "y": 340,
         "wires": [
-            []
+            [
+                "a90d2026efa28e42"
+            ]
         ]
     },
     {
-        "id": "e714979e071c1f58",
+        "id": "974bd5ae572a6836",
         "type": "rbe",
-        "z": "0feaaf0c3923705a",
-        "g": "c804c0af6c4f296e",
+        "z": "7c7bdfca332d7026",
+        "g": "f289cbe6944d707e",
         "name": "RBE Filter",
         "func": "rbe",
         "gap": "",
         "start": "",
         "inout": "out",
         "property": "payload",
-        "x": 730,
-        "y": 300,
+        "x": 930,
+        "y": 100,
         "wires": [
             [
-                "16bf76fe1ae6db8d",
-                "4e03c4118184fcfa"
+                "a5c4dc983a6136e3",
+                "7ab7264133bdaa67"
             ]
         ]
     },
     {
-        "id": "fe1a85b4b2de6dc2",
+        "id": "f73d9a2343be4e71",
         "type": "status",
-        "z": "0feaaf0c3923705a",
-        "g": "c804c0af6c4f296e",
+        "z": "7c7bdfca332d7026",
+        "g": "f289cbe6944d707e",
         "name": "RBE Status",
         "scope": [
-            "e714979e071c1f58"
+            "974bd5ae572a6836"
         ],
-        "x": 730,
-        "y": 360,
+        "x": 930,
+        "y": 160,
         "wires": [
             []
         ]
     },
     {
-        "id": "16bf76fe1ae6db8d",
+        "id": "a5c4dc983a6136e3",
         "type": "victron-output-custom",
-        "z": "0feaaf0c3923705a",
-        "g": "fe715181731c0d5d",
+        "z": "7c7bdfca332d7026",
+        "g": "c8a2cedbdb927c00",
+        "outputs": 0,
         "service": "com.victronenergy.settings",
         "path": "/Settings/SystemSetup/MaxChargeVoltage",
         "serviceObj": {
@@ -453,60 +396,391 @@
         },
         "name": "DVCC MaxChargeVoltage",
         "onlyChanges": false,
-        "outputs": 0,
-        "x": 1030,
-        "y": 300,
+        "x": 1190,
+        "y": 100,
         "wires": []
     },
     {
-        "id": "4e03c4118184fcfa",
+        "id": "7ab7264133bdaa67",
         "type": "function",
-        "z": "0feaaf0c3923705a",
-        "g": "fe715181731c0d5d",
+        "z": "7c7bdfca332d7026",
+        "g": "c8a2cedbdb927c00",
         "name": "DVCC Tracker",
-        "func": "var d = new Date();\nvar t = ('0'+d.getHours()).slice(-2)+':'+\n        ('0'+d.getMinutes()).slice(-2)+':'+\n        ('0'+d.getSeconds()).slice(-2);\n\nvar count = context.get('writeCount') || 0;\ncount++;\ncontext.set('writeCount', count);\n\nvar v = msg.payload;\nvar label;\nif (v === 0) label = 'DVCC=0 (BMS free)';\nelse label = 'DVCC='+v+'V';\n\nnode.status({\n    fill: v === 0 ? 'blue' : 'green',\n    shape: 'dot',\n    text: label+' | writes:'+count+' | '+t\n});\n\nreturn msg;\n",
+        "func": "var d = new Date();\nvar t = ('0'+d.getHours()).slice(-2)+':'+\n        ('0'+d.getMinutes()).slice(-2)+':'+\n        ('0'+d.getSeconds()).slice(-2);\n\nvar count = context.get('writeCount') || 0;\ncount++;\ncontext.set('writeCount', count);\n\nvar v = msg.payload;\nvar label = (v === 0) ? 'DVCC=0 (BMS free)' : 'DVCC='+v+'V';\n\nnode.status({\n    fill: v === 0 ? 'blue' : 'green',\n    shape: 'dot',\n    text: label+' | writes:'+count+' | '+t\n});\n\nreturn msg;\n",
         "outputs": 1,
         "timeout": "",
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1010,
-        "y": 360,
+        "x": 1160,
+        "y": 160,
         "wires": [
             [
-                "b831379606120465"
+                "a90d2026efa28e42"
             ]
         ],
         "icon": "font-awesome/fa-tachometer"
     },
     {
-        "id": "b831379606120465",
+        "id": "a90d2026efa28e42",
         "type": "debug",
-        "z": "0feaaf0c3923705a",
-        "g": "fe715181731c0d5d",
-        "name": "Debug DVCC",
+        "z": "7c7bdfca332d7026",
+        "g": "c8a2cedbdb927c00",
+        "name": "Debug",
         "active": false,
         "tosidebar": true,
         "console": false,
         "tostatus": false,
-        "complete": "payload",
-        "targetType": "msg",
+        "complete": "true",
+        "targetType": "full",
         "statusVal": "",
         "statusType": "auto",
-        "x": 1300,
-        "y": 360,
+        "x": 1370,
+        "y": 160,
         "wires": []
     },
     {
-        "id": "d8d84aef9838f156",
+        "id": "b01a4ee6a53dd6b4",
+        "type": "victron-virtual-indicator",
+        "z": "7c7bdfca332d7026",
+        "g": "c8a2cedbdb927c00",
+        "name": "Charge Indicator",
+        "customname": "Charge",
+        "group": "Full Charge Control",
+        "indicator_type": 0,
+        "unit": "",
+        "labels": "Conservation,Free",
+        "primary_label": "Current",
+        "range_min": "",
+        "range_max": "",
+        "decimals": "",
+        "show_ui_input": 1,
+        "x": 1480,
+        "y": 280,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "2ce8d4e98f6f8cb4",
+        "type": "victron-virtual-indicator",
+        "z": "7c7bdfca332d7026",
+        "g": "c8a2cedbdb927c00",
+        "name": "Last Full Charge Indicator",
+        "customname": "Last Full Charge",
+        "group": "Full Charge Control",
+        "indicator_type": 1,
+        "unit": " days",
+        "labels": "",
+        "primary_label": "–",
+        "range_min": "",
+        "range_max": "",
+        "decimals": "0",
+        "show_ui_input": 1,
+        "x": 1510,
+        "y": 340,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "4a7c64b5e57853d5",
+        "type": "victron-virtual-switch",
+        "z": "7c7bdfca332d7026",
+        "g": "88c184b61e9c253a",
+        "name": "Conservation Voltage",
+        "outputs": 3,
+        "switch_1_type": 8,
+        "switch_1_min": 52,
+        "switch_1_max": 54.4,
+        "switch_1_initial": 53.9,
+        "switch_1_label": "",
+        "switch_1_unit": " V",
+        "switch_1_step": 0.1,
+        "switch_1_customname": "Conservation Voltage",
+        "switch_1_group": "Full Charge Control",
+        "switch_1_include_measurement": false,
+        "switch_1_rgb_color_wheel": false,
+        "switch_1_cct_wheel": false,
+        "switch_1_rgb_white_dimmer": false,
+        "switch_1_show_ui_input": 2,
+        "switch_1_passthrough_mode": "always",
+        "x": 160,
+        "y": 340,
+        "wires": [
+            [],
+            [
+                "ac08dd0e4a464378"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "ac08dd0e4a464378",
+        "type": "change",
+        "z": "7c7bdfca332d7026",
+        "g": "88c184b61e9c253a",
+        "name": "topic: param_float",
+        "rules": [
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "param_float",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 420,
+        "y": 340,
+        "wires": [
+            [
+                "5bb293e64e875099"
+            ]
+        ]
+    },
+    {
+        "id": "c5bc04fcc6982969",
+        "type": "victron-virtual-switch",
+        "z": "7c7bdfca332d7026",
+        "g": "88c184b61e9c253a",
+        "name": "Interval",
+        "outputs": 3,
+        "switch_1_type": 8,
+        "switch_1_min": 1,
+        "switch_1_max": 8,
+        "switch_1_initial": 2,
+        "switch_1_label": "",
+        "switch_1_unit": "",
+        "switch_1_step": 1,
+        "switch_1_customname": "Full Charge Interval (Weeks)",
+        "switch_1_group": "Full Charge Control",
+        "switch_1_include_measurement": false,
+        "switch_1_rgb_color_wheel": false,
+        "switch_1_cct_wheel": false,
+        "switch_1_rgb_white_dimmer": false,
+        "switch_1_show_ui_input": 2,
+        "switch_1_passthrough_mode": "always",
+        "x": 120,
+        "y": 420,
+        "wires": [
+            [],
+            [
+                "877e4460d9cca558"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "877e4460d9cca558",
+        "type": "change",
+        "z": "7c7bdfca332d7026",
+        "g": "88c184b61e9c253a",
+        "name": "topic: param_interval",
+        "rules": [
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "param_interval",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 420,
+        "y": 420,
+        "wires": [
+            [
+                "5bb293e64e875099"
+            ]
+        ]
+    },
+    {
+        "id": "c35ebc75ce7c95af",
+        "type": "victron-event",
+        "z": "7c7bdfca332d7026",
+        "g": "c8a2cedbdb927c00",
+        "name": "VRM Event Full Charge",
+        "severity": 2,
+        "app": "FullCharge",
+        "x": 1500,
+        "y": 220,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "c97fb8cc3a6fb020",
         "type": "inject",
-        "z": "0feaaf0c3923705a",
-        "g": "38d2c4b5e9f7aae9",
+        "z": "7c7bdfca332d7026",
+        "g": "c9d5a7e548a63287",
+        "name": "Test: CVL 55.2 V",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": "",
+        "topic": "",
+        "payload": "55.2",
+        "payloadType": "num",
+        "x": 140,
+        "y": 520,
+        "wires": [
+            [
+                "5bb293e64e875099"
+            ]
+        ]
+    },
+    {
+        "id": "73bb8ab916a17ac2",
+        "type": "inject",
+        "z": "7c7bdfca332d7026",
+        "g": "c9d5a7e548a63287",
+        "name": "Test: CVL 54.4 V",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": "",
+        "topic": "",
+        "payload": "54.4",
+        "payloadType": "num",
+        "x": 140,
+        "y": 560,
+        "wires": [
+            [
+                "5bb293e64e875099"
+            ]
+        ]
+    },
+    {
+        "id": "3f0181ab558c8f7f",
+        "type": "inject",
+        "z": "7c7bdfca332d7026",
+        "g": "c9d5a7e548a63287",
+        "name": "Mode: Auto Charge",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": "",
+        "topic": "modus",
+        "payload": "auto",
+        "payloadType": "str",
+        "x": 400,
+        "y": 520,
+        "wires": [
+            [
+                "5bb293e64e875099"
+            ]
+        ]
+    },
+    {
+        "id": "d6b78afc16d7a11b",
+        "type": "inject",
+        "z": "7c7bdfca332d7026",
+        "g": "c9d5a7e548a63287",
+        "name": "Mode: Manual Conservation",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": "",
+        "topic": "modus",
+        "payload": "manual_schon",
+        "payloadType": "str",
+        "x": 420,
+        "y": 560,
+        "wires": [
+            [
+                "5bb293e64e875099"
+            ]
+        ]
+    },
+    {
+        "id": "2d5689a567d6f13f",
+        "type": "inject",
+        "z": "7c7bdfca332d7026",
+        "g": "c9d5a7e548a63287",
+        "name": "Mode: Manual Free",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": "",
+        "topic": "modus",
+        "payload": "manual_frei",
+        "payloadType": "str",
+        "x": 390,
+        "y": 600,
+        "wires": [
+            [
+                "5bb293e64e875099"
+            ]
+        ]
+    },
+    {
+        "id": "9cf8332ae9f00888",
+        "type": "inject",
+        "z": "7c7bdfca332d7026",
+        "g": "d5ccbe0360ef4d7f",
         "name": "Load History Start",
         "props": [
             {
                 "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
             }
         ],
         "repeat": "",
@@ -517,55 +791,57 @@
         "payload": "",
         "payloadType": "str",
         "x": 150,
-        "y": 920,
+        "y": 700,
         "wires": [
             [
-                "9b2ad5f82dae497e"
+                "60159a9b7f5e4173"
             ]
         ]
     },
     {
-        "id": "9b2ad5f82dae497e",
+        "id": "60159a9b7f5e4173",
         "type": "file in",
-        "z": "0feaaf0c3923705a",
-        "g": "38d2c4b5e9f7aae9",
+        "z": "7c7bdfca332d7026",
+        "g": "d5ccbe0360ef4d7f",
         "name": "Read Full Charge History",
         "filename": "/data/home/nodered/.node-red/history/volladung_history.json",
+        "filenameType": "str",
         "format": "utf8",
         "chunk": false,
         "sendError": true,
         "encoding": "none",
+        "allProps": false,
         "x": 400,
-        "y": 920,
+        "y": 700,
         "wires": [
             [
-                "dfe01e7e0f345d35"
+                "7ecd4c3e0242fa60"
             ]
         ]
     },
     {
-        "id": "dfe01e7e0f345d35",
+        "id": "7ecd4c3e0242fa60",
         "type": "function",
-        "z": "0feaaf0c3923705a",
-        "g": "38d2c4b5e9f7aae9",
+        "z": "7c7bdfca332d7026",
+        "g": "d5ccbe0360ef4d7f",
         "name": "Load History into Context",
-        "func": "var d = new Date();\nvar t = ('0'+d.getHours()).slice(-2)+':'+\n        ('0'+d.getMinutes()).slice(-2);\n\ntry {\n    var history = JSON.parse(msg.payload);\n    flow.set('volladung_history', history);\n    flow.set('volladung_history_ready', true);\n\n    var last = history.length > 0 ? history[history.length-1] : null;\n    var lastText = last ? ('last: W'+last.kw+' ('+last.date+')') : 'no entries';\n\n    node.status({\n        fill:'green',\n        shape:'dot',\n        text: '✓ '+history.length+' entries | '+lastText+' | loaded '+t\n    });\n} catch (e) {\n    flow.set('volladung_history', []);\n    flow.set('volladung_history_ready', true);\n    node.status({\n        fill:'red',\n        shape:'ring',\n        text:'✗ History empty/invalid | '+t\n    });\n}\nreturn null;\n",
+        "func": "var d = new Date();\nvar t = ('0'+d.getHours()).slice(-2)+':'+\n        ('0'+d.getMinutes()).slice(-2);\n\ntry {\n    var history = JSON.parse(msg.payload);\n    if (!Array.isArray(history)) throw new Error('not an array');\n    flow.set('volladung_history', history);\n    flow.set('volladung_history_ready', true);\n\n    var last = history.length > 0 ? history[history.length-1] : null;\n    var lastText = last ? ('last: '+last.date+(last.quelle ? ' '+last.quelle : '')) : 'no entries';\n\n    node.status({ fill:'green', shape:'dot',\n        text: '✓ '+history.length+' entries | '+lastText+' | loaded '+t });\n} catch (e) {\n    flow.set('volladung_history', []);\n    flow.set('volladung_history_ready', true);\n    node.status({ fill:'red', shape:'ring', text:'✗ history empty/invalid | '+t });\n}\nreturn null;\n",
         "outputs": 0,
         "timeout": "",
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 670,
-        "y": 920,
+        "x": 680,
+        "y": 700,
         "wires": [],
         "icon": "font-awesome/fa-database"
     },
     {
-        "id": "018a33cafcea1ff7",
+        "id": "fbfe372897cb104d",
         "type": "file",
-        "z": "0feaaf0c3923705a",
-        "g": "38d2c4b5e9f7aae9",
+        "z": "7c7bdfca332d7026",
+        "g": "d5ccbe0360ef4d7f",
         "name": "Write Full Charge History",
         "filename": "/data/home/nodered/.node-red/history/volladung_history.json",
         "filenameType": "str",
@@ -573,38 +849,82 @@
         "createDir": true,
         "overwriteFile": true,
         "encoding": "utf8",
-        "x": 1000,
-        "y": 920,
+        "x": 990,
+        "y": 700,
         "wires": [
             [
-                "62dd50d63f6871e5"
+                "d4b2b5e42d97cfd7"
             ]
         ]
     },
     {
-        "id": "62dd50d63f6871e5",
+        "id": "d4b2b5e42d97cfd7",
         "type": "function",
-        "z": "0feaaf0c3923705a",
-        "g": "38d2c4b5e9f7aae9",
+        "z": "7c7bdfca332d7026",
+        "g": "d5ccbe0360ef4d7f",
         "name": "Write Tracker",
-        "func": "var d = new Date();\nvar t = ('0'+d.getHours()).slice(-2)+':'+\n        ('0'+d.getMinutes()).slice(-2)+':'+\n        ('0'+d.getSeconds()).slice(-2);\nvar dt = d.toISOString().slice(0,10);\n\nvar count = context.get('writes') || 0;\ncount++;\ncontext.set('writes', count);\n\nnode.status({\n    fill:'green',\n    shape:'dot',\n    text: '✓ written '+dt+' '+t+' | total:'+count\n});\nreturn null;\n",
+        "func": "var d = new Date();\nvar t = ('0'+d.getHours()).slice(-2)+':'+\n        ('0'+d.getMinutes()).slice(-2)+':'+\n        ('0'+d.getSeconds()).slice(-2);\nvar count = (context.get('writes') || 0) + 1;\ncontext.set('writes', count);\nnode.status({ fill:'green', shape:'dot',\n    text: '✓ written '+d.toISOString().slice(0,10)+' '+t+' | total:'+count });\nreturn null;\n",
         "outputs": 0,
         "timeout": "",
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1280,
-        "y": 920,
+        "x": 1230,
+        "y": 700,
         "wires": [],
         "icon": "font-awesome/fa-floppy-o"
     },
     {
-        "id": "a566b6c7948d2ac4",
+        "id": "8a3f13f54ae5433c",
+        "type": "victron-virtual-indicator",
+        "z": "7c7bdfca332d7026",
+        "g": "c8a2cedbdb927c00",
+        "name": "VRM Conservation Voltage Indicator",
+        "customname": "Conservation Voltage",
+        "group": "Full Charge Control",
+        "indicator_type": 1,
+        "unit": " V",
+        "labels": "",
+        "primary_label": "Set to",
+        "range_min": "",
+        "range_max": "",
+        "decimals": "1",
+        "show_ui_input": 4,
+        "x": 1540,
+        "y": 400,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "ef7a9d158e73a75b",
+        "type": "victron-virtual-indicator",
+        "z": "7c7bdfca332d7026",
+        "g": "c8a2cedbdb927c00",
+        "name": "VRM Full Charge Interval Indicator",
+        "customname": "Full Charge Interval (Weeks)",
+        "group": "Full Charge Control",
+        "indicator_type": 1,
+        "unit": "",
+        "labels": "",
+        "primary_label": "Set to",
+        "range_min": "",
+        "range_max": "",
+        "decimals": "0",
+        "show_ui_input": 4,
+        "x": 1540,
+        "y": 460,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "ac1b6932ecc3169d",
         "type": "global-config",
         "env": [],
         "modules": {
-            "@victronenergy/node-red-contrib-victron": "1.6.64"
+            "@victronenergy/node-red-contrib-victron": "1.7.27"
         }
     }
 ]
