@@ -69,8 +69,6 @@ The history file is created automatically at:
 
 ![Flow overview](flow-overview-de.png)
 
-## Screenshots
-
 ![VRM panel](vrm.png)
 
 ## Tested with
