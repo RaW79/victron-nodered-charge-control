@@ -45,7 +45,7 @@ Selected via the **Charge Control** dropdown on the GX / in VRM:
 
 ## Parameters
 
-Adjustable live on the GX / Local UI (group **Full Charge Control**), persisted across restarts:
+Adjustable live on the GX / Local UI (group **Full Charge Control**), persisted across restarts. Read-only monitoring of configured values is available remotely via VRM:
 
 | Parameter | Default | Range | Description |
 |-----------|---------|-------|-------------|
