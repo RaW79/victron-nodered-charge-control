@@ -83,7 +83,15 @@ The history file is created automatically at:
 
 ## Screenshots
 
+**Flow overview**
+
 ![Flow overview](charge-control/flow-overview-de.png)
+
+**Local GUI — full control** (`http://<IP-GX>/gui-v2/`)
+
+![Local GUI](charge-control/Local.png)
+
+**VRM / Remote Console — read-only monitoring**
 
 ![VRM panel](charge-control/vrm.png)
 
