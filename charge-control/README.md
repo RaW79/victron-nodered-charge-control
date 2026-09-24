@@ -71,13 +71,9 @@ The history file is created automatically at:
 
 ![Flow overview](flow-overview-de.png)
 
-**Local GUI — full control** (`http://<IP-GX>/gui-v2/`)
+**Local GUI — full control** (`http://<IP-GX>/gui-v2/`) &nbsp;&nbsp;&nbsp; **VRM / Remote Console — read-only monitoring**
 
-![Local GUI](Local.png)
-
-**VRM / Remote Console — read-only monitoring**
-
-![VRM panel](vrm.png)
+<img src="Local.png" width="240"/> &nbsp; <img src="vrm.png" width="220"/>
 
 ## Tested with
 
